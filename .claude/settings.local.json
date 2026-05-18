@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:3001/api/projects\" -UseBasicParsing | Select-Object -ExpandProperty Content)"
+    ]
+  }
+}
