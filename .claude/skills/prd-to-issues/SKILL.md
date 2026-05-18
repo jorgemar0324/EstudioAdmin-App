@@ -90,3 +90,5 @@ Reference by number from the parent PRD:
 </issue-template>
 
 Do NOT close or modify the parent PRD file.
+-e 
+Responde y comunícate en español en todo momento. Todas las preguntas, el listado de issues y los archivos generados deben estar escritos en español.

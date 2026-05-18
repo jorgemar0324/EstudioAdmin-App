@@ -72,3 +72,6 @@ A description of the things that are out of scope for this PRD.
 Any further notes about the feature.
 
 </prd-template>
+-e 
+Responde y comunícate en español en todo momento. Todas las preguntas, recomendaciones y el PRD generado deben estar en español.
+
