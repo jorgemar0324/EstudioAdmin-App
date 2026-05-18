@@ -57,15 +57,33 @@ PORT=3000
 
 ## Flujo de trabajo con Claude Code
 
-Este proyecto se desarrolla siguiendo el flujo del AI Engineer Workshop 2026:
+Este proyecto se desarrolla siguiendo el flujo del AI Engineer Workshop 2026. A continuación se muestra cómo se aplicó cada paso en este proyecto específico:
 
-1. **Client Brief** (`client-brief.md`) — punto de partida con la necesidad real
-2. **`/grill-me`** — clarifica ambigüedades del brief antes de escribir código
-3. **`/write-a-prd`** — genera `issues/prd.md` con los requerimientos estructurados
-4. **`/prd-to-issues`** — parte el PRD en issues ejecutables (tracer bullets)
-5. **Ralph loops** — el agente ejecuta issues con TDD (`./ralph/once.sh`)
-6. **`/handoff`** — resumen de contexto entre sesiones (ver `handoffs.md`)
-7. **`/improve-codebase-architecture`** — control arquitectónico cada 2-3 issues
+| Paso | Skill | Qué produjo en este proyecto |
+|---|---|---|
+| 1 | Brief | [`client-brief.md`](client-brief.md) — necesidad real de Jorge: centralizar tareas de estudio dispersas |
+| 2 | `/grill-me` | Clarificó restricciones clave: sin login, sin Kanban, listas simples, stack definido por el estudiante |
+| 3 | `/write-a-prd` | [`issues/prd.md`](issues/prd.md) — 38 user stories, decisiones de arquitectura y modelo de datos |
+| 4 | `/prd-to-issues` | 11 issues ejecutables en [`issues/`](issues/) — uno por módulo funcional (ver tabla abajo) |
+| 5 | Ralph loops | Cada issue se ejecuta con TDD: test rojo → implementación → test verde |
+| 6 | `/handoff` | Resumen de contexto entre sesiones guardado en [`handoffs.md`](handoffs.md) |
+| 7 | `/improve-codebase-architecture` | Revisión arquitectónica cada 2-3 issues para mantener módulos profundos y bajo acoplamiento |
+
+### Issues generados por `/prd-to-issues`
+
+| Issue | Módulo | Estado |
+|---|---|---|
+| [001](issues/001-monorepo-listar-proyectos.md) | Monorepo + listar proyectos | Pendiente |
+| [002](issues/002-crear-editar-proyectos.md) | Crear y editar proyectos | Pendiente |
+| [003](issues/003-eliminar-proyecto.md) | Eliminar proyecto | Pendiente |
+| [004](issues/004-pagina-proyecto-listar-tareas.md) | Página de proyecto + listar tareas | Pendiente |
+| [005](issues/005-crear-editar-tareas.md) | Crear y editar tareas | Pendiente |
+| [006](issues/006-cambiar-estado-eliminar-tareas.md) | Cambiar estado y eliminar tareas | Pendiente |
+| [007](issues/007-progreso-proyectos.md) | Progreso por proyecto | Pendiente |
+| [008](issues/008-iniciar-terminar-sesion.md) | Iniciar y terminar sesión de estudio | Pendiente |
+| [009](issues/009-recuperacion-sesion-huerfana.md) | Recuperación de sesión huérfana | Pendiente |
+| [010](issues/010-historial-sesiones-proyecto.md) | Historial de sesiones por proyecto | Pendiente |
+| [011](issues/011-dashboard.md) | Dashboard de progreso | Pendiente |
 
 ## Estructura del proyecto
 
