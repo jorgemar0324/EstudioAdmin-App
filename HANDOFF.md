@@ -1,16 +1,22 @@
-# Handoff — Administracion_Estudio
+# Bitácora de Transferencia — Administracion_Estudio
 
-**Fecha:** 2026-05-18
+Este archivo recopila los resúmenes de contexto generados con la skill `/handoff` de Claude Code a lo largo del desarrollo del proyecto. Cada entrada representa una transferencia limpia de contexto entre sesiones de trabajo.
 
 ---
 
-## 1. Proyecto
+## Handoff #1 — 18 mayo 2026
+
+**Issues completados en esta sesión:** 001
+
+---
+
+### 1. Proyecto
 
 **Administracion_Estudio** — app web personal para gestión de proyectos de estudio, timer de sesiones y dashboard de progreso. Sin login, sin multi-usuario, solo para uso personal de Jorge (estudiante Ingeniería de Software, semestre 6).
 
 ---
 
-## 2. Stack técnico
+### 2. Stack técnico
 
 | Capa | Tecnología |
 |------|------------|
@@ -23,82 +29,54 @@
 
 ---
 
-## 3. Lo que se construyó (issue 001 — COMPLETO)
-
-### Archivos creados
-
-**Raíz:**
-- `package.json` — workspaces + script `npm run dev` con concurrently
-- `.gitignore`
-- `.env.example` — template sin credenciales reales
+### 3. Lo que se construyó (issue 001 — COMPLETO)
 
 **`packages/shared/src/index.ts`** — tipos TypeScript compartidos: `Priority`, `ProjectType`, `TaskStatus`, `Project`, `Task`, `StudySession`
 
 **`apps/api/`:**
-- `package.json`, `tsconfig.json`
-- `prisma/schema.prisma` — 3 modelos: `Project`, `Task`, `StudySession` con `onDelete: Cascade`
-- `prisma/migrations/20260518153312_init/` — migración aplicada en Supabase
-- `src/index.ts` — Express app, CORS para localhost:5173, ruta `/api/projects`
-- `src/lib/prisma.ts` — singleton PrismaClient
-- `src/routes/projects.ts` — `GET /api/projects` con ordenamiento por prioridad (aplicado en capa de aplicación)
-- `apps/api/.env` — credenciales reales de Supabase (NO commitear)
+- Schema Prisma con 3 modelos: `Project`, `Task`, `StudySession` con `onDelete: Cascade`
+- Migración aplicada en Supabase
+- Express app con CORS para localhost:5173
+- `GET /api/projects` con ordenamiento por prioridad (aplicado en capa de aplicación)
 
 **`apps/web/`:**
-- `package.json`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`
-- `vite.config.ts` — alias `@` → `src/`, proxy `/api` → `localhost:3001`
-- `tailwind.config.js` — CSS variables de shadcn/ui configuradas
-- `postcss.config.js`, `index.html`
-- `src/index.css` — `@tailwind` + variables CSS del tema shadcn
-- `src/main.tsx` — entry point
-- `src/App.tsx` — `QueryClientProvider` + `BrowserRouter` + rutas
-- `src/lib/utils.ts` — función `cn()` (clsx + tailwind-merge)
-- `src/lib/queryClient.ts` — TanStack Query client (staleTime 30s)
-- `src/lib/api.ts` — función `api.projects.list()` (fetch con error handling)
-- `src/components/Navbar.tsx` — links "Proyectos" y "Dashboard" con `NavLink` activo
-- `src/components/ui/button.tsx` — componente Button de shadcn/ui
-- `src/pages/ProjectsPage.tsx` — lista de proyectos con `ProjectCard` + estado vacío + loading/error states
-- `src/pages/ProjectPage.tsx` — placeholder (ruta `/projects/:id` registrada)
-- `src/pages/DashboardPage.tsx` — placeholder (ruta `/dashboard` registrada)
+- Vite con alias `@` → `src/`, proxy `/api` → `localhost:3001`
+- Tailwind CSS + variables CSS de shadcn/ui
+- TanStack Query client (staleTime 30s)
+- `ProjectsPage` con lista de proyectos, estado vacío motivador y loading/error states
+- Navbar con links "Proyectos" y "Dashboard"
 
 ---
 
-## 4. Decisiones arquitectónicas clave
+### 4. Decisiones arquitectónicas clave
 
 | Decisión | Detalle |
 |----------|---------|
-| Ordenamiento proyectos | En capa de aplicación (no en SQL): `{ ALTA: 0, MEDIA: 1, BAJA: 2 }` — el enum Prisma tiene ALTA primero pero se prefirió no depender del orden interno de PostgreSQL |
-| Supabase + Prisma | Schema usa `url` (pgBouncer puerto 6543) + `directUrl` (puerto 5432) — necesario para que migraciones funcionen a través del pooler |
-| Password Supabase | Contraseña real: `MartiJuli2018*+` — URL-encoded en `.env` como `MartiJuli2018%2A%2B` |
-| shadcn/ui | Configurado manualmente (sin CLI) — Button en `src/components/ui/button.tsx`. Toasts (Sonner) aún NO instalados — se necesitan en issue 002 |
-| Alias `@` | Configurado en `tsconfig.app.json` (paths) y `vite.config.ts` (resolve.alias) |
+| Ordenamiento proyectos | En capa de aplicación (no en SQL): `ALTA → MEDIA → BAJA` |
+| Supabase + Prisma | `url` (pgBouncer puerto 6543) + `directUrl` (puerto 5432) para migraciones |
+| shadcn/ui | Configurado manualmente sin CLI |
 | TypeScript | Limpio en ambos apps (`tsc --noEmit` sin errores) |
 
-### Decisiones de diseño UX (de la sesión /grill-me — 20 decisiones)
+### Decisiones de diseño UX (sesión /grill-me)
 
 1. Navegación por rutas separadas con React Router
-2. Home `/` = lista de proyectos
-3. Proyectos ordenados por prioridad ALTA→BAJA, luego `createdAt`
-4. Tareas ordenadas: EN_PROGRESO → PENDIENTE → COMPLETADA, luego prioridad
-5. Sesión huérfana: dialog pregunta "¿Terminas ahora o descartas?"
-6. Racha: mínimo **10 minutos** de sesión por día calendario
-7. "La semana" en dashboard = lunes a domingo (no rolling 7 días)
-8. Borrado proyectos: cascada con dialog de confirmación mostrando conteo exacto
-9. Tareas vencidas: fecha en **rojo**, sin cambiar posición en la lista
-10. Progreso proyecto: barra de progreso (shadcn `Progress`) + texto "X/Y tareas"
-11. Timer activo: en la **barra de navegación** global
-12. Nav: solo "Proyectos" y "Dashboard" (historial de sesiones vive en pestaña del proyecto)
-13. Historial sesiones: pestaña "Sesiones" dentro de `/projects/:id`
-14. Crear/editar: modal reutilizable (prop `project` o `null`)
-15. Modal reutilizado para crear y editar (mismo componente, pre-rellena si edita)
-16. Feedback: errores de validación **inline** + éxitos/errores de red como **toasts**
-17. Timer counter: `setInterval` local desde `startedAt` del backend (sin polling)
-18. Cambio de estado de tarea: **dropdown** en la tarjeta
-19. Estado vacío: mensaje motivador + botón "Crear tu primer proyecto"
-20. Confirmación de borrado: dialog con conteo exacto de tareas y sesiones afectadas
+2. Home `/` = lista de proyectos, ordenados por prioridad ALTA→BAJA luego `createdAt`
+3. Tareas ordenadas: EN_PROGRESO → PENDIENTE → COMPLETADA, luego prioridad
+4. Sesión huérfana: dialog "¿Terminas ahora o descartas?"
+5. Racha: mínimo 10 minutos de sesión por día calendario
+6. Dashboard: semana = lunes a domingo (no rolling 7 días)
+7. Borrado proyectos: cascada con dialog mostrando conteo exacto
+8. Tareas vencidas: fecha en rojo, sin cambiar posición en lista
+9. Progreso proyecto: barra de progreso + texto "X/Y tareas"
+10. Timer activo visible en la barra de navegación global
+11. Crear/editar: modal reutilizable (prop `project` o `null`)
+12. Feedback: errores inline + éxitos/errores de red como toasts (Sonner)
+13. Timer counter: `setInterval` local desde `startedAt` del backend
+14. Cambio de estado de tarea: dropdown en la tarjeta
 
 ---
 
-## 5. Issues completados
+### 5. Issues completados
 
 | Issue | Estado |
 |-------|--------|
@@ -106,46 +84,106 @@
 
 ---
 
-## 6. Issues pendientes (en orden)
+### 6. Próximo paso exacto
 
-| Prioridad | Issue | Bloqueado por |
-|-----------|-------|---------------|
-| 1 | `002-crear-editar-proyectos.md` | 001 ✅ |
-| 2 | `003-eliminar-proyecto.md` | 002 |
-| 3 | `004-pagina-proyecto-listar-tareas.md` | 001 ✅ (paralelo a 002) |
-| 4 | `005-crear-editar-tareas.md` | 004 |
-| 5 | `006-cambiar-estado-eliminar-tareas.md` | 005 |
-| 6 | `007-progreso-proyectos.md` | 006 |
-| 7 | `008-iniciar-terminar-sesion.md` | 004 (paralelo a 002/003) |
-| 8 | `009-recuperacion-sesion-huerfana.md` | 008 |
-| 9 | `010-historial-sesiones-proyecto.md` | 008 |
-| 10 | `011-dashboard.md` | 007 + 010 |
+Implementar issue 002 — Crear y editar proyectos. Instalar Sonner, agregar `POST /api/projects` y `PATCH /api/projects/:id`, crear `ProjectFormModal.tsx`.
 
 ---
 
-## 7. Bloqueantes
+## Handoff #2 — 26 mayo 2026
 
-- **Ninguno activo.** Todo lo necesario para continuar con el issue 002 está listo.
-- Recordar: antes de implementar issue 002, instalar **Sonner** (toasts) en `apps/web`: `npm install sonner --workspace=apps/web` y configurarlo en `App.tsx` (`<Toaster />`).
+**Issues completados en esta sesión:** 001, 002, 003, 004
 
 ---
 
-## 8. Próximo paso exacto
+### 1. Proyecto
 
-**Implementar issue 002: `issues/002-crear-editar-proyectos.md`**
+App web personal para centralizar proyectos de estudio, gestión de tareas, timer de sesiones y dashboard de progreso semanal. Sin login, sin multi-usuario, para uso exclusivo de Jorge.
 
-Acciones concretas:
-1. Instalar `sonner` en `apps/web` y agregar `<Toaster />` en `App.tsx`
-2. Agregar `POST /api/projects` y `PATCH /api/projects/:id` en `apps/api/src/routes/projects.ts`
-3. Crear `apps/web/src/components/ProjectFormModal.tsx` — modal reutilizable con `shadcn Dialog` que recibe `project: Project | null`
-4. Actualizar `apps/web/src/lib/api.ts` con `api.projects.create()` y `api.projects.update()`
-5. Conectar el botón "Crear tu primer proyecto" y el botón "Nuevo proyecto" en `ProjectsPage.tsx` para abrir el modal
-6. Agregar botón de editar en `ProjectCard` que abre el modal pre-rellenado
-7. Invalidar query `['projects']` tras guardar para refrescar la lista
+---
 
-**Para arrancar los servidores:**
-```bash
-# Desde la raíz del proyecto
-npm run dev
-# API en localhost:3001, frontend en localhost:5173
-```
+### 2. Lo que se construyó
+
+**001 — Monorepo + listar proyectos**
+- Estructura monorepo: `apps/api`, `apps/web`, `packages/shared`
+- Schema Prisma con modelos Project, Task, StudySession
+- `GET /api/projects` con orden por prioridad → fecha
+- ProjectsPage con tarjetas, estado vacío motivador, Navbar
+
+**002 — Crear y editar proyectos**
+- `POST /api/projects` y `PATCH /api/projects/:id`
+- `ProjectFormModal` reutilizable (prop `project | null`)
+- Validación inline + toasts de éxito/error
+
+**003 — Eliminar proyecto**
+- `DELETE /api/projects/:id` con cascada en Prisma
+- `DeleteConfirmDialog` genérico con conteo de tareas y sesiones a borrar
+- Toast de confirmación al borrar
+
+**004 — Página de proyecto con pestañas Tareas/Sesiones**
+- Ruta `/projects/:id` → `ProjectPage`
+- Dos pestañas: "Tareas" y "Sesiones" (Sesiones es placeholder aún)
+- `GET /api/projects/:id/tasks` con orden EN_PROGRESO → PENDIENTE → COMPLETADA, luego prioridad ALTA → MEDIA → BAJA
+- `TaskCard` con badge de status, badge de prioridad, fecha límite en rojo si vencida
+- Botón "Añadir tarea" sin conectar aún
+
+**chore — Vitest config**
+- Scripts de test configurados con `--passWithNoTests`
+- Sin archivos de test escritos aún
+
+---
+
+### 3. Decisiones arquitectónicas clave
+
+| Decisión | Detalle |
+|----------|---------|
+| Sin versionado de API | `/api/...` (no `/api/v1/...`) |
+| Ordenamiento tareas | En memoria tras `findMany` — debería estar en `TaskService` dedicado (deuda técnica) |
+| `ProjectWithCount` | `GET /api/projects/:id` incluye `_count: { tasks, sessions }` |
+| Cascada de borrado | `onDelete: Cascade` en Prisma para tareas y sesiones |
+| Timer frontend | `setInterval` local con `Date.now() - startedAt` (no implementado aún — issue 008) |
+| `packages/shared` | Tipos `Priority`, `ProjectType`, `TaskStatus`, `Project`, `Task`, `StudySession` |
+
+---
+
+### 4. Issues completados
+
+| # | Título | Ubicación |
+|---|--------|-----------|
+| 001 | Monorepo + listar proyectos | `issues/done/` |
+| 002 | Crear y editar proyectos | `issues/done/` |
+| 003 | Eliminar proyecto | `issues/done/` |
+| 004 | Página de proyecto + listar tareas | `issues/done/` |
+
+---
+
+### 5. Issues pendientes
+
+| # | Título | Bloqueado por |
+|---|--------|---------------|
+| 005 | Crear y editar tareas (TaskFormModal) | 004 ✅ |
+| 006 | Cambiar estado y eliminar tareas | 005 |
+| 007 | Barra de progreso en tarjetas de proyecto | 006 |
+| 008 | Iniciar y terminar sesión de estudio | 007 |
+| 009 | Recuperación de sesión huérfana | 008 |
+| 010 | Historial de sesiones por proyecto | 008 |
+| 011 | Dashboard (horas semanales, racha, progreso) | 010 |
+
+---
+
+### 6. Bloqueantes
+
+- Issue 005: faltan endpoints `POST /api/projects/:id/tasks`, `PATCH /api/tasks/:id` y `DELETE /api/tasks/:id`
+- Pestaña "Sesiones" en ProjectPage es placeholder hasta issues 008-010
+- No hay tests escritos aún — config de Vitest lista pero sin archivos de test
+
+---
+
+### 7. Próximo paso exacto
+
+Ejecutar issue 005 — Crear y editar tareas:
+1. Backend: agregar `POST /api/projects/:id/tasks` y `PATCH /api/tasks/:id`
+2. Frontend: agregar `tasks.create()` y `tasks.update()` en `api.ts`
+3. Crear `TaskFormModal.tsx` reutilizable (prop `task | null`)
+4. Conectar botón "Añadir tarea" en `ProjectPage.tsx`
+5. Agregar tests Vitest para la función de ordenamiento
