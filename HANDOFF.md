@@ -271,3 +271,98 @@ Ejecutar issue 005 — Crear y editar tareas:
 
 El RFC completo con firmas TypeScript, tests boundary, y estrategia de migración está en `issues/012-rfc-service-layer-api-client.md`.
 
+---
+
+# Handoff — Sesión 4 (2026-05-26)
+
+## Proyecto
+**Administración de Estudio** — App web para gestionar proyectos académicos (materias, cursos online, side projects), tareas y sesiones de estudio cronometradas. Monorepo TypeScript.
+
+## Stack técnico
+- **Frontend:** React 18 + Vite + Tailwind CSS + shadcn/ui + TanStack Query + React Router + Sonner (toasts)
+- **Backend:** Node.js + Express + Prisma ORM + PostgreSQL (Supabase)
+- **Testing:** Vitest — 13 tests pasando (3 archivos: projects, tasks, sessions)
+- **Shared types:** `packages/shared/src/index.ts` — `Project`, `ProjectWithProgress`, `Task`, `StudySession`, enums
+
+## Lo que se construyó en esta sesión
+
+### Issue 007 — Barra de progreso en tarjetas de proyecto
+| Archivo | Cambio |
+|---------|--------|
+| `apps/api/src/services/projects.ts` | `list()` usa `include: { tasks: { select: { status } } }` y calcula `completedTasks`/`totalTasks` en JS; strip del array `tasks` del response |
+| `apps/api/src/__tests__/services/projects.test.ts` | **NUEVO** — 3 tests: conteos correctos, 0/0 sin tareas, ausencia del campo `tasks` |
+| `packages/shared/src/index.ts` | Añade `ProjectWithProgress extends Project { completedTasks, totalTasks }` |
+| `apps/web/src/lib/api.ts` | `api.projects.list()` tipado como `ProjectWithProgress[]` |
+| `apps/web/src/components/ui/progress.tsx` | **NUEVO** — componente Progress sin dependencia Radix (solo div + CSS) |
+| `apps/web/src/pages/ProjectsPage.tsx` | `ProjectCard` muestra `<Progress>` + texto "X/Y tareas" + porcentaje |
+| `apps/web/src/hooks/useTasks.ts` | `useCreateTask`, `useUpdateTask`, `useDeleteTask` invalidan `['projects']` en `onSuccess` |
+
+### Issue 008 — Timer de sesión de estudio
+| Archivo | Cambio |
+|---------|--------|
+| `apps/api/src/services/sessions.ts` | **NUEVO** — `SessionService`: `getActive()`, `create(projectId)` con guard 409, `close(id)` con `Math.round` para `durationMinutes` y guard 400 |
+| `apps/api/src/__tests__/services/sessions.test.ts` | **NUEVO** — 4 tests: 409 si sesión activa, crea si no hay ninguna, `durationMinutes` correcto, 400 si ya cerrada |
+| `apps/api/src/routes/sessions.ts` | **NUEVO** — `GET /api/sessions/active`, `PATCH /api/sessions/:id` |
+| `apps/api/src/routes/projects.ts` | Añade `POST /:id/sessions` |
+| `apps/api/src/services/index.ts` | Exporta `sessionService` singleton |
+| `apps/api/src/index.ts` | Registra `sessionsRouter` en `/api/sessions` |
+| `apps/web/src/lib/api.ts` | Añade `api.sessions.{ getActive, create, close }` |
+| `apps/web/src/contexts/ActiveSessionContext.tsx` | **NUEVO** — React Context con `useQuery` (staleTime: Infinity) + `setInterval` único para elapsed time; expone `{ session, elapsedSeconds, start, stop }` |
+| `apps/web/src/App.tsx` | Envuelve app con `<ActiveSessionProvider>` (dentro de `QueryClientProvider`) |
+| `apps/web/src/components/Navbar.tsx` | Timer `HH:MM:SS` con ícono + botón "Terminar" cuando `session !== null` |
+| `apps/web/src/pages/ProjectPage.tsx` | Botón "Iniciar sesión" junto al título, solo visible cuando `!activeSession` |
+
+## Decisiones arquitectónicas
+
+### `ActiveSessionProvider` como Context (no hook puro)
+- El timer (`setInterval` de 1s) debe correr **una sola vez** aunque Navbar y ProjectPage ambos consuman el estado de sesión.
+- Si fuera un hook puro con `useEffect`, cada componente ejecutaría su propio intervalo.
+- Solución: Context Provider que corre el intervalo único; el hook `useActiveSession()` solo expone el contexto.
+
+### `staleTime: Infinity` en `useActiveSession`
+- `GET /api/sessions/active` no debe hacer refetch automático en background (sería polling).
+- El estado se actualiza manualmente vía `queryClient.setQueryData` cuando `start()` y `stop()` tienen éxito.
+- Esto asegura que al recargar la app el timer se recupera correctamente desde `startedAt`.
+
+### `Progress` sin Radix
+- `@radix-ui/react-progress` no estaba instalado. El componente Progress es tan simple (div + width%) que agregar la dependencia sería sobrediseño.
+
+### Invalidación cruzada de queries en `useTasks`
+- Al crear/actualizar/eliminar una tarea, se invalida tanto `['tasks', projectId]` como `['projects']` para que las barras de progreso se refresquen automáticamente.
+
+## Issues completados (`issues/done/`)
+001, 002, 003, 004, 005, 006, 007, 008 — todos en `issues/done/`
+
+## Issues pendientes (en orden de prioridad)
+| Issue | Descripción | Desbloqueado por |
+|-------|-------------|-----------------|
+| **009** | Recuperación de sesión huérfana — `DELETE /api/sessions/:id` + `OrphanSessionDialog` | 008 ✓ |
+| **010** | Historial de sesiones por proyecto — `GET /api/projects/:id/sessions` + pestaña Sesiones | 008 ✓ |
+| **011** | Dashboard — `DashboardService` con `weeklyHours`, `streak` (algoritmo), progreso por proyecto | 007 ✓ + 010 |
+
+El issue 012 es solo documentación RFC, ya implementado.
+
+## Bloqueantes
+- Ninguno. Issues 009 y 010 están desbloqueados. Ambos pueden ejecutarse en paralelo.
+
+## Estado actual de tests
+```
+apps/api/__tests__/services/projects.test.ts  — 3 tests ✓
+apps/api/__tests__/services/sessions.test.ts  — 4 tests ✓
+apps/api/__tests__/services/tasks.test.ts     — 2 tests ✓
+Total: 9 tests en backend, 0 en frontend
+```
+
+## Próximo paso exacto (para `bash ralph/once.sh`)
+
+Implementar **issue 009 — Recuperación de sesión huérfana**:
+
+1. **Backend:** `DELETE /api/sessions/:id` → `SessionService.discard(id)` — elimina sin calcular duración, devuelve 204. Añadir ruta en `sessions.ts`.
+2. **Frontend:** `api.sessions.discard(id)` en `api.ts`. Añadir `discard()` en `ActiveSessionContext`.
+3. **Frontend:** Componente `OrphanSessionDialog.tsx` — se muestra al montar si hay sesión activa (siempre, o después de umbral de tiempo). Muestra: tiempo transcurrido, nombre del proyecto. Botones: "Terminar ahora" (llama `stop()`) y "Descartar" (llama `discard()`).
+4. **Necesita:** el nombre del proyecto en la sesión activa → `GET /api/sessions/active` debe incluir `project.name`. Extender `SessionService.getActive()` con `include: { project: { select: { name: true } } }`.
+5. **Shared types:** Añadir `StudySessionWithProject extends StudySession { projectName: string }`.
+6. **Tests:** `SessionService.discard` — 404 si no existe, ok:true si existe.
+7. Mover `issues/009-recuperacion-sesion-huerfana.md` a `issues/done/`.
+
+Issue 010 puede seguir inmediatamente después (solo agrega `GET /api/projects/:id/sessions` con filtro `endedAt != null` y la pestaña Sesiones en ProjectPage).
