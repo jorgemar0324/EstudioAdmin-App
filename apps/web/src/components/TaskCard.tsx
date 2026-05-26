@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react'
 import type { Task, Priority, TaskStatus } from '@repo/shared'
 import { cn } from '@/lib/utils'
 
@@ -38,11 +39,21 @@ function formatDate(dateStr: string): string {
   })
 }
 
-export function TaskCard({ task }: { task: Task }) {
+export function TaskCard({ task, onEdit }: { task: Task; onEdit: (task: Task) => void }) {
   const overdue = isDueDateOverdue(task.dueDate, task.status)
 
   return (
-    <div className="rounded-lg border bg-card p-4 shadow-sm">
+    <div className="group relative rounded-lg border bg-card p-4 shadow-sm">
+      <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          onClick={() => onEdit(task)}
+          className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          aria-label="Editar tarea"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
       <div className="mb-2 flex items-start justify-between gap-2">
         <h3 className="text-sm font-medium leading-snug">{task.title}</h3>
         <div className="flex shrink-0 gap-1">

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import type { Project, Priority, ProjectType } from '@repo/shared'
 import { api } from '@/lib/api'
+import { useProjects, useDeleteProject } from '@/hooks/useProjects'
 import { Button } from '@/components/ui/button'
 import { ProjectFormModal } from '@/components/ProjectFormModal'
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
@@ -60,20 +60,14 @@ function ProjectCard({
       </Link>
       <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
-          onClick={(e) => {
-            e.preventDefault()
-            onEdit(project)
-          }}
+          onClick={(e) => { e.preventDefault(); onEdit(project) }}
           className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           aria-label="Editar proyecto"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button
-          onClick={(e) => {
-            e.preventDefault()
-            onDelete(project)
-          }}
+          onClick={(e) => { e.preventDefault(); onDelete(project) }}
           className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           aria-label="Eliminar proyecto"
         >
@@ -96,11 +90,8 @@ function EmptyState({ onNew }: { onNew: () => void }) {
 }
 
 export function ProjectsPage() {
-  const queryClient = useQueryClient()
-  const { data: projects, isLoading, isError } = useQuery({
-    queryKey: ['projects'],
-    queryFn: api.projects.list,
-  })
+  const { projects, isLoading, isError } = useProjects()
+  const { remove: deleteProject, isPending: deleting } = useDeleteProject()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
@@ -110,8 +101,7 @@ export function ProjectsPage() {
     project: Project | null
     taskCount: number
     sessionCount: number
-    loading: boolean
-  }>({ open: false, project: null, taskCount: 0, sessionCount: 0, loading: false })
+  }>({ open: false, project: null, taskCount: 0, sessionCount: 0 })
 
   function openCreate() {
     setEditingProject(null)
@@ -131,7 +121,6 @@ export function ProjectsPage() {
         project,
         taskCount: data._count.tasks,
         sessionCount: data._count.sessions,
-        loading: false,
       })
     } catch {
       toast.error('No se pudo obtener la información del proyecto')
@@ -140,16 +129,11 @@ export function ProjectsPage() {
 
   async function confirmDelete() {
     if (!deleteDialog.project) return
-    setDeleteDialog((d) => ({ ...d, loading: true }))
     try {
-      await api.projects.delete(deleteDialog.project.id)
-      await queryClient.invalidateQueries({ queryKey: ['projects'] })
-      toast.success('Proyecto eliminado')
-      setDeleteDialog((d) => ({ ...d, open: false, loading: false }))
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error al eliminar'
-      toast.error(message)
-      setDeleteDialog((d) => ({ ...d, loading: false }))
+      await deleteProject(deleteDialog.project.id)
+      setDeleteDialog((d) => ({ ...d, open: false }))
+    } catch {
+      // toast.error is handled by the hook
     }
   }
 
@@ -176,16 +160,16 @@ export function ProjectsPage() {
           <FolderOpen className="h-5 w-5" />
           <h1 className="text-xl font-bold">Proyectos</h1>
         </div>
-        {projects && projects.length > 0 && (
+        {projects.length > 0 && (
           <Button onClick={openCreate}>Nuevo proyecto</Button>
         )}
       </div>
 
-      {projects && projects.length === 0 ? (
+      {projects.length === 0 ? (
         <EmptyState onNew={openCreate} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects?.map((project) => (
+          {projects.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
@@ -208,7 +192,7 @@ export function ProjectsPage() {
         title={`¿Eliminar "${deleteDialog.project?.name}"?`}
         description={`Se borrarán ${deleteDialog.taskCount} ${deleteDialog.taskCount === 1 ? 'tarea' : 'tareas'} y ${deleteDialog.sessionCount} ${deleteDialog.sessionCount === 1 ? 'sesión' : 'sesiones'}. Esta acción no se puede deshacer.`}
         onConfirm={confirmDelete}
-        loading={deleteDialog.loading}
+        loading={deleting}
       />
     </div>
   )

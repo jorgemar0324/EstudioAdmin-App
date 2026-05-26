@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, ClipboardList, Plus } from 'lucide-react'
-import { api } from '@/lib/api'
+import type { Task } from '@repo/shared'
+import { useProject } from '@/hooks/useProjects'
+import { useTasks } from '@/hooks/useTasks'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/TaskCard'
+import { TaskFormModal } from '@/components/TaskFormModal'
 import { cn } from '@/lib/utils'
 
 type Tab = 'tareas' | 'sesiones'
@@ -13,17 +15,21 @@ export function ProjectPage() {
   const { id } = useParams<{ id: string }>()
   const [activeTab, setActiveTab] = useState<Tab>('tareas')
 
-  const { data: project, isLoading: projectLoading, isError: projectError } = useQuery({
-    queryKey: ['project', id],
-    queryFn: () => api.projects.getById(id!),
-    enabled: !!id,
+  const { project, isLoading: projectLoading } = useProject(id)
+  const { tasks, isLoading: tasksLoading } = useTasks(id!, { enabled: activeTab === 'tareas' })
+
+  const [taskModal, setTaskModal] = useState<{ open: boolean; task: Task | null }>({
+    open: false,
+    task: null,
   })
 
-  const { data: tasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ['tasks', id],
-    queryFn: () => api.tasks.listByProject(id!),
-    enabled: !!id && activeTab === 'tareas',
-  })
+  function openCreateTask() {
+    setTaskModal({ open: true, task: null })
+  }
+
+  function openEditTask(task: Task) {
+    setTaskModal({ open: true, task })
+  }
 
   if (projectLoading) {
     return (
@@ -33,7 +39,7 @@ export function ProjectPage() {
     )
   }
 
-  if (projectError || !project) {
+  if (!project) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-8">
         <p className="text-destructive">Proyecto no encontrado.</p>
@@ -76,15 +82,26 @@ export function ProjectPage() {
         </div>
       </div>
 
-      {/* Tab content */}
       {activeTab === 'tareas' && (
-        <TasksTab tasks={tasks ?? []} loading={tasksLoading} />
+        <TasksTab
+          tasks={tasks}
+          loading={tasksLoading}
+          onNew={openCreateTask}
+          onEdit={openEditTask}
+        />
       )}
       {activeTab === 'sesiones' && (
         <div className="py-12 text-center text-muted-foreground">
           <p>Historial de sesiones disponible próximamente.</p>
         </div>
       )}
+
+      <TaskFormModal
+        open={taskModal.open}
+        onOpenChange={(open) => setTaskModal((m) => ({ ...m, open }))}
+        projectId={id!}
+        task={taskModal.task}
+      />
     </div>
   )
 }
@@ -92,9 +109,13 @@ export function ProjectPage() {
 function TasksTab({
   tasks,
   loading,
+  onNew,
+  onEdit,
 }: {
-  tasks: import('@repo/shared').Task[]
+  tasks: Task[]
   loading: boolean
+  onNew: () => void
+  onEdit: (task: Task) => void
 }) {
   if (loading) {
     return (
@@ -110,7 +131,7 @@ function TasksTab({
         <ClipboardList className="mb-4 h-12 w-12 text-muted-foreground" />
         <h2 className="mb-2 text-lg font-semibold">Aún no hay tareas</h2>
         <p className="mb-6 text-muted-foreground">Añade la primera tarea a este proyecto.</p>
-        <Button>
+        <Button onClick={onNew}>
           <Plus className="mr-1.5 h-4 w-4" />
           Añadir tarea
         </Button>
@@ -119,10 +140,18 @@ function TasksTab({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
-      ))}
+    <div>
+      <div className="mb-4 flex justify-end">
+        <Button onClick={onNew} size="sm">
+          <Plus className="mr-1.5 h-4 w-4" />
+          Añadir tarea
+        </Button>
+      </div>
+      <div className="flex flex-col gap-3">
+        {tasks.map((task) => (
+          <TaskCard key={task.id} task={task} onEdit={onEdit} />
+        ))}
+      </div>
     </div>
   )
 }
