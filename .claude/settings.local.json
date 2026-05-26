@@ -5,7 +5,10 @@
       "Bash(npx prisma *)",
       "Bash(npx tsc *)",
       "Bash(npm run *)",
-      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:3001/api/projects\" -UseBasicParsing | Select-Object -ExpandProperty Content)"
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:3001/api/projects\" -UseBasicParsing | Select-Object -ExpandProperty Content)",
+      "Bash(bash *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
