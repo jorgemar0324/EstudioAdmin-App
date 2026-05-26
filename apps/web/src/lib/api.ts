@@ -1,4 +1,4 @@
-import type { Project } from '@repo/shared'
+import type { Project, Priority, ProjectType } from '@repo/shared'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -12,8 +12,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
+interface ProjectPayload {
+  name: string
+  description?: string
+  type: ProjectType
+  priority: Priority
+}
+
 export const api = {
   projects: {
     list: () => request<Project[]>('/api/projects'),
+    create: (data: ProjectPayload) =>
+      request<Project>('/api/projects', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: string, data: Partial<ProjectPayload>) =>
+      request<Project>(`/api/projects/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
   },
 }
