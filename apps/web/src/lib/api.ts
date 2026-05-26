@@ -1,4 +1,4 @@
-import type { Project, Priority, ProjectType } from '@repo/shared'
+import type { Project, Task, Priority, ProjectType } from '@repo/shared'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -44,5 +44,9 @@ export const api = {
         throw new Error((body as { error?: string }).error ?? `Error ${res.status}`)
       }
     },
+  },
+  tasks: {
+    listByProject: (projectId: string) =>
+      request<Task[]>(`/api/projects/${projectId}/tasks`),
   },
 }

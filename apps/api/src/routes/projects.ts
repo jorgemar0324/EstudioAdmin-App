@@ -5,6 +5,7 @@ import prisma from '../lib/prisma'
 const router = Router()
 
 const PRIORITY_ORDER: Record<string, number> = { ALTA: 0, MEDIA: 1, BAJA: 2 }
+const STATUS_ORDER: Record<string, number> = { EN_PROGRESO: 0, PENDIENTE: 1, COMPLETADA: 2 }
 
 const VALID_TYPES: ProjectType[] = ['MATERIA', 'CURSO_ONLINE', 'SIDE_PROJECT']
 const VALID_PRIORITIES: Priority[] = ['BAJA', 'MEDIA', 'ALTA']
@@ -129,6 +130,26 @@ router.patch('/:id', async (req, res) => {
     res.json(updated)
   } catch {
     res.status(500).json({ error: 'Error al actualizar proyecto' })
+  }
+})
+
+router.get('/:id/tasks', async (req, res) => {
+  try {
+    const { id } = req.params
+    const project = await prisma.project.findUnique({ where: { id } })
+    if (!project) {
+      res.status(404).json({ error: 'Proyecto no encontrado' })
+      return
+    }
+    const tasks = await prisma.task.findMany({ where: { projectId: id } })
+    tasks.sort((a, b) => {
+      const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status]
+      if (statusDiff !== 0) return statusDiff
+      return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
+    })
+    res.json(tasks)
+  } catch {
+    res.status(500).json({ error: 'Error al obtener tareas' })
   }
 })
 
