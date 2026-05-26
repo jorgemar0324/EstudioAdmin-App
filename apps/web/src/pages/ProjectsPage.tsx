@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { BookOpen, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import type { Project, Priority, ProjectType } from '@repo/shared'
+import type { ProjectWithProgress, Priority, ProjectType } from '@repo/shared'
 import { api } from '@/lib/api'
 import { useProjects, useDeleteProject } from '@/hooks/useProjects'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { ProjectFormModal } from '@/components/ProjectFormModal'
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
@@ -33,9 +34,9 @@ function ProjectCard({
   onEdit,
   onDelete,
 }: {
-  project: Project
-  onEdit: (project: Project) => void
-  onDelete: (project: Project) => void
+  project: ProjectWithProgress
+  onEdit: (project: ProjectWithProgress) => void
+  onDelete: (project: ProjectWithProgress) => void
 }) {
   return (
     <div className="group relative rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
@@ -57,6 +58,15 @@ function ProjectCard({
         <span className="inline-block rounded bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
           {TYPE_LABELS[project.type]}
         </span>
+        <div className="mt-3">
+          <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+            <span>{project.completedTasks}/{project.totalTasks} tareas</span>
+            {project.totalTasks > 0 && (
+              <span>{Math.round((project.completedTasks / project.totalTasks) * 100)}%</span>
+            )}
+          </div>
+          <Progress value={project.totalTasks > 0 ? (project.completedTasks / project.totalTasks) * 100 : 0} />
+        </div>
       </Link>
       <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
@@ -94,11 +104,11 @@ export function ProjectsPage() {
   const { remove: deleteProject, isPending: deleting } = useDeleteProject()
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [editingProject, setEditingProject] = useState<ProjectWithProgress | null>(null)
 
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean
-    project: Project | null
+    project: ProjectWithProgress | null
     taskCount: number
     sessionCount: number
   }>({ open: false, project: null, taskCount: 0, sessionCount: 0 })
@@ -108,12 +118,12 @@ export function ProjectsPage() {
     setModalOpen(true)
   }
 
-  function openEdit(project: Project) {
+  function openEdit(project: ProjectWithProgress) {
     setEditingProject(project)
     setModalOpen(true)
   }
 
-  async function openDelete(project: Project) {
+  async function openDelete(project: ProjectWithProgress) {
     try {
       const data = await api.projects.getById(project.id)
       setDeleteDialog({

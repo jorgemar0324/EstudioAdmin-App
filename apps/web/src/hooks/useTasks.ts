@@ -35,6 +35,7 @@ export function useCreateTask() {
       api.tasks.create(projectId, data),
     onSuccess: (_task, { projectId }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
       toast.success('Tarea creada')
     },
     onError: (err) => {
@@ -51,6 +52,7 @@ export function useUpdateTask() {
       api.tasks.update(id, data),
     onSuccess: (task) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', task.projectId] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
       toast.success('Tarea actualizada')
     },
     onError: (err) => {
@@ -66,6 +68,7 @@ export function useDeleteTask() {
     mutationFn: ({ id }: { id: string; projectId: string }) => api.tasks.delete(id),
     onSuccess: (_data, { projectId }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
       toast.success('Tarea eliminada')
     },
     onError: (err) => {

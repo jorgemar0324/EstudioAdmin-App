@@ -11,6 +11,11 @@ export interface Project {
   createdAt: string
 }
 
+export interface ProjectWithProgress extends Project {
+  completedTasks: number
+  totalTasks: number
+}
+
 export interface Task {
   id: string
   projectId: string

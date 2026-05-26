@@ -17,7 +17,15 @@ export class ProjectService {
 
   async list() {
     try {
-      const projects = await this.db.project.findMany({ orderBy: { createdAt: 'asc' } })
+      const rawProjects = await this.db.project.findMany({
+        include: { tasks: { select: { status: true } } },
+        orderBy: { createdAt: 'asc' },
+      })
+      const projects = rawProjects.map(({ tasks, ...project }) => ({
+        ...project,
+        completedTasks: tasks.filter((t) => t.status === 'COMPLETADA').length,
+        totalTasks: tasks.length,
+      }))
       projects.sort((a, b) => {
         const diff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
         if (diff !== 0) return diff

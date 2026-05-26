@@ -1,4 +1,4 @@
-import type { Project, Task, Priority, ProjectType, TaskStatus } from '@repo/shared'
+import type { Project, ProjectWithProgress, Task, Priority, ProjectType, TaskStatus } from '@repo/shared'
 
 export class ApiError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -47,7 +47,7 @@ interface UpdateTaskPayload {
 
 export const api = {
   projects: {
-    list: () => request<Project[]>('/api/projects'),
+    list: () => request<ProjectWithProgress[]>('/api/projects'),
     getById: (id: string) => request<ProjectWithCount>(`/api/projects/${id}`),
     create: (data: ProjectPayload) =>
       request<Project>('/api/projects', { method: 'POST', body: JSON.stringify(data) }),
