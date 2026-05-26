@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ClipboardList, Plus } from 'lucide-react'
+import { ArrowLeft, ClipboardList, Plus, PlayCircle } from 'lucide-react'
 import type { Task, TaskStatus } from '@repo/shared'
 import { useProject } from '@/hooks/useProjects'
 import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/useTasks'
+import { useActiveSession } from '@/contexts/ActiveSessionContext'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/TaskCard'
 import { TaskFormModal } from '@/components/TaskFormModal'
@@ -21,6 +22,7 @@ export function ProjectPage() {
 
   const { update } = useUpdateTask()
   const { remove, isPending: isDeleting } = useDeleteTask()
+  const { session: activeSession, start: startSession } = useActiveSession()
 
   const [taskModal, setTaskModal] = useState<{ open: boolean; task: Task | null }>({
     open: false,
@@ -83,7 +85,15 @@ export function ProjectPage() {
         Proyectos
       </Link>
 
-      <h1 className="mb-6 text-2xl font-bold">{project.name}</h1>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">{project.name}</h1>
+        {!activeSession && (
+          <Button variant="outline" size="sm" onClick={() => startSession(id!)}>
+            <PlayCircle className="mr-1.5 h-4 w-4" />
+            Iniciar sesión
+          </Button>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="mb-6 border-b">
