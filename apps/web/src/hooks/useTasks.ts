@@ -59,3 +59,18 @@ export function useUpdateTask() {
   })
   return { update: mutateAsync, isPending }
 }
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient()
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: ({ id }: { id: string; projectId: string }) => api.tasks.delete(id),
+    onSuccess: (_data, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] })
+      toast.success('Tarea eliminada')
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Error al eliminar tarea')
+    },
+  })
+  return { remove: mutateAsync, isPending }
+}

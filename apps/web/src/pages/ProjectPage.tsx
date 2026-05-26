@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, ClipboardList, Plus } from 'lucide-react'
-import type { Task } from '@repo/shared'
+import type { Task, TaskStatus } from '@repo/shared'
 import { useProject } from '@/hooks/useProjects'
-import { useTasks } from '@/hooks/useTasks'
+import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/useTasks'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/TaskCard'
 import { TaskFormModal } from '@/components/TaskFormModal'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
 
 type Tab = 'tareas' | 'sesiones'
@@ -18,7 +19,15 @@ export function ProjectPage() {
   const { project, isLoading: projectLoading } = useProject(id)
   const { tasks, isLoading: tasksLoading } = useTasks(id!, { enabled: activeTab === 'tareas' })
 
+  const { update } = useUpdateTask()
+  const { remove, isPending: isDeleting } = useDeleteTask()
+
   const [taskModal, setTaskModal] = useState<{ open: boolean; task: Task | null }>({
+    open: false,
+    task: null,
+  })
+
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; task: Task | null }>({
     open: false,
     task: null,
   })
@@ -29,6 +38,20 @@ export function ProjectPage() {
 
   function openEditTask(task: Task) {
     setTaskModal({ open: true, task })
+  }
+
+  function openDeleteTask(task: Task) {
+    setDeleteDialog({ open: true, task })
+  }
+
+  async function handleStatusChange(task: Task, newStatus: TaskStatus) {
+    await update({ id: task.id, data: { status: newStatus } })
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteDialog.task) return
+    await remove({ id: deleteDialog.task.id, projectId: id! })
+    setDeleteDialog({ open: false, task: null })
   }
 
   if (projectLoading) {
@@ -88,6 +111,8 @@ export function ProjectPage() {
           loading={tasksLoading}
           onNew={openCreateTask}
           onEdit={openEditTask}
+          onDelete={openDeleteTask}
+          onStatusChange={handleStatusChange}
         />
       )}
       {activeTab === 'sesiones' && (
@@ -102,6 +127,19 @@ export function ProjectPage() {
         projectId={id!}
         task={taskModal.task}
       />
+
+      <DeleteConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog((d) => ({ ...d, open }))}
+        title="Eliminar tarea"
+        description={
+          deleteDialog.task
+            ? `¿Eliminar '${deleteDialog.task.title}'? Esta acción no se puede deshacer.`
+            : ''
+        }
+        onConfirm={handleConfirmDelete}
+        loading={isDeleting}
+      />
     </div>
   )
 }
@@ -111,11 +149,15 @@ function TasksTab({
   loading,
   onNew,
   onEdit,
+  onDelete,
+  onStatusChange,
 }: {
   tasks: Task[]
   loading: boolean
   onNew: () => void
   onEdit: (task: Task) => void
+  onDelete: (task: Task) => void
+  onStatusChange: (task: Task, newStatus: TaskStatus) => void
 }) {
   if (loading) {
     return (
@@ -149,7 +191,13 @@ function TasksTab({
       </div>
       <div className="flex flex-col gap-3">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} onEdit={onEdit} />
+          <TaskCard
+            key={task.id}
+            task={task}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onStatusChange={onStatusChange}
+          />
         ))}
       </div>
     </div>

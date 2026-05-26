@@ -67,5 +67,12 @@ export const api = {
       request<Task>(`/api/projects/${projectId}/tasks`, { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: UpdateTaskPayload) =>
       request<Task>(`/api/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    delete: async (id: string) => {
+      const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new ApiError((body as { error?: string }).error ?? `Error ${res.status}`, res.status)
+      }
+    },
   },
 }

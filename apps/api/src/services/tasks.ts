@@ -65,6 +65,17 @@ export class TaskService {
     }
   }
 
+  async delete(id: string) {
+    try {
+      const existing = await this.db.task.findUnique({ where: { id } })
+      if (!existing) return { ok: false as const, status: 404 as const, message: 'Tarea no encontrada' }
+      await this.db.task.delete({ where: { id } })
+      return { ok: true as const, data: undefined }
+    } catch {
+      return { ok: false as const, status: 500 as const, message: 'Error al eliminar tarea' }
+    }
+  }
+
   async update(id: string, input: UpdateTaskInput) {
     const { title, description, priority, status, dueDate } = input
     if (title !== undefined && title.trim() === '') return { ok: false as const, status: 400 as const, message: 'El título no puede estar vacío' }
