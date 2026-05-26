@@ -66,6 +66,25 @@ router.post('/', async (req, res) => {
   }
 })
 
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { tasks: true, sessions: true } },
+      },
+    })
+    if (!project) {
+      res.status(404).json({ error: 'Proyecto no encontrado' })
+      return
+    }
+    res.json(project)
+  } catch {
+    res.status(500).json({ error: 'Error al obtener proyecto' })
+  }
+})
+
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -110,6 +129,21 @@ router.patch('/:id', async (req, res) => {
     res.json(updated)
   } catch {
     res.status(500).json({ error: 'Error al actualizar proyecto' })
+  }
+})
+
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const existing = await prisma.project.findUnique({ where: { id } })
+    if (!existing) {
+      res.status(404).json({ error: 'Proyecto no encontrado' })
+      return
+    }
+    await prisma.project.delete({ where: { id } })
+    res.status(204).send()
+  } catch {
+    res.status(500).json({ error: 'Error al eliminar proyecto' })
   }
 })
 

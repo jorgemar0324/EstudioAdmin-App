@@ -19,9 +19,14 @@ interface ProjectPayload {
   priority: Priority
 }
 
+export interface ProjectWithCount extends Project {
+  _count: { tasks: number; sessions: number }
+}
+
 export const api = {
   projects: {
     list: () => request<Project[]>('/api/projects'),
+    getById: (id: string) => request<ProjectWithCount>(`/api/projects/${id}`),
     create: (data: ProjectPayload) =>
       request<Project>('/api/projects', {
         method: 'POST',
@@ -32,5 +37,12 @@ export const api = {
         method: 'PATCH',
         body: JSON.stringify(data),
       }),
+    delete: async (id: string) => {
+      const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error((body as { error?: string }).error ?? `Error ${res.status}`)
+      }
+    },
   },
 }

@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { BookOpen, FolderOpen, Pencil } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { BookOpen, FolderOpen, Pencil, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import type { Project, Priority, ProjectType } from '@repo/shared'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { ProjectFormModal } from '@/components/ProjectFormModal'
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog'
 import { cn } from '@/lib/utils'
 
 const PRIORITY_LABELS: Record<Priority, string> = {
@@ -29,12 +31,14 @@ const TYPE_LABELS: Record<ProjectType, string> = {
 function ProjectCard({
   project,
   onEdit,
+  onDelete,
 }: {
   project: Project
   onEdit: (project: Project) => void
+  onDelete: (project: Project) => void
 }) {
   return (
-    <div className="relative rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <div className="group relative rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
       <Link to={`/projects/${project.id}`} className="block p-5">
         <div className="mb-3 flex items-start justify-between gap-2">
           <h2 className="text-base font-semibold leading-tight">{project.name}</h2>
@@ -54,16 +58,28 @@ function ProjectCard({
           {TYPE_LABELS[project.type]}
         </span>
       </Link>
-      <button
-        onClick={(e) => {
-          e.preventDefault()
-          onEdit(project)
-        }}
-        className="absolute right-3 top-3 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover:opacity-100 [.rounded-lg:hover_&]:opacity-100"
-        aria-label="Editar proyecto"
-      >
-        <Pencil className="h-3.5 w-3.5" />
-      </button>
+      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            onEdit(project)
+          }}
+          className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          aria-label="Editar proyecto"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            onDelete(project)
+          }}
+          className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          aria-label="Eliminar proyecto"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   )
 }
@@ -80,6 +96,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
 }
 
 export function ProjectsPage() {
+  const queryClient = useQueryClient()
   const { data: projects, isLoading, isError } = useQuery({
     queryKey: ['projects'],
     queryFn: api.projects.list,
@@ -87,6 +104,14 @@ export function ProjectsPage() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    project: Project | null
+    taskCount: number
+    sessionCount: number
+    loading: boolean
+  }>({ open: false, project: null, taskCount: 0, sessionCount: 0, loading: false })
 
   function openCreate() {
     setEditingProject(null)
@@ -96,6 +121,36 @@ export function ProjectsPage() {
   function openEdit(project: Project) {
     setEditingProject(project)
     setModalOpen(true)
+  }
+
+  async function openDelete(project: Project) {
+    try {
+      const data = await api.projects.getById(project.id)
+      setDeleteDialog({
+        open: true,
+        project,
+        taskCount: data._count.tasks,
+        sessionCount: data._count.sessions,
+        loading: false,
+      })
+    } catch {
+      toast.error('No se pudo obtener la información del proyecto')
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteDialog.project) return
+    setDeleteDialog((d) => ({ ...d, loading: true }))
+    try {
+      await api.projects.delete(deleteDialog.project.id)
+      await queryClient.invalidateQueries({ queryKey: ['projects'] })
+      toast.success('Proyecto eliminado')
+      setDeleteDialog((d) => ({ ...d, open: false, loading: false }))
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al eliminar'
+      toast.error(message)
+      setDeleteDialog((d) => ({ ...d, loading: false }))
+    }
   }
 
   if (isLoading) {
@@ -131,7 +186,12 @@ export function ProjectsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects?.map((project) => (
-            <ProjectCard key={project.id} project={project} onEdit={openEdit} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onEdit={openEdit}
+              onDelete={openDelete}
+            />
           ))}
         </div>
       )}
@@ -140,6 +200,15 @@ export function ProjectsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         project={editingProject}
+      />
+
+      <DeleteConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog((d) => ({ ...d, open }))}
+        title={`¿Eliminar "${deleteDialog.project?.name}"?`}
+        description={`Se borrarán ${deleteDialog.taskCount} ${deleteDialog.taskCount === 1 ? 'tarea' : 'tareas'} y ${deleteDialog.sessionCount} ${deleteDialog.sessionCount === 1 ? 'sesión' : 'sesiones'}. Esta acción no se puede deshacer.`}
+        onConfirm={confirmDelete}
+        loading={deleteDialog.loading}
       />
     </div>
   )
