@@ -187,3 +187,87 @@ Ejecutar issue 005 — Crear y editar tareas:
 3. Crear `TaskFormModal.tsx` reutilizable (prop `task | null`)
 4. Conectar botón "Añadir tarea" en `ProjectPage.tsx`
 5. Agregar tests Vitest para la función de ordenamiento
+
+# Handoff — Sesión 3
+
+## Proyecto
+**Administración de Estudio** — App web para gestionar proyectos académicos (materias, cursos online, side projects), sus tareas y sesiones de estudio. Monorepo TypeScript.
+
+## Stack técnico
+- **Frontend:** React 18 + Vite + Tailwind CSS + shadcn/ui (Radix UI) + TanStack Query + React Router
+- **Backend:** Node.js + Express + Prisma ORM
+- **Base de datos:** PostgreSQL (Supabase)
+- **Testing:** Vitest (configurado, sin tests escritos aún)
+- **Shared types:** `packages/shared/src/index.ts` — `Project`, `Task`, `StudySession`, enums
+
+## Lo que se construyó en esta sesión
+**Ningún código de producción modificado.** Esta fue una sesión de arquitectura pura:
+
+1. **Exploración de codebase** — análisis exhaustivo de friction points arquitectónicos
+2. **3 propuestas de interfaz** (sub-agentes paralelos) para dos problemas:
+   - Backend: separación del service layer (`routes/projects.ts` con 4 responsabilidades mezcladas)
+   - Frontend: patrón para el API client (`api.ts` sin convención para 12+ métodos nuevos)
+3. **`issues/012-rfc-service-layer-api-client.md`** — RFC completo con interfaz híbrida recomendada
+
+## Decisiones arquitectónicas tomadas
+
+### Backend — Service layer con `ServiceResult<T>`
+- Un archivo de servicio por dominio: `services/projects.ts`, `services/tasks.ts`, `services/sessions.ts`, `services/dashboard.ts`
+- Cada servicio recibe `PrismaClient` por **constructor injection**
+- Devuelven `ServiceResult<T> = { ok: true; data: T } | { ok: false; status: 400|404|409|500; message: string }` — nunca lanzan excepciones por casos esperados
+- Helper `sendResult(res, result, successStatus?)` de 6 líneas elimina toda la duplicación de try/catch en rutas
+- Las rutas quedan de **1 línea por handler**
+- **Sin capa Repository todavía** — upgrade path explícito en el RFC cuando los tests lo exijan
+- Singletons en `services/index.ts` para producción; tests usan `new XxxService(testPrismaClient)`
+
+### Frontend — Hooks por dominio sobre transporte plano
+- `api.ts` queda como **capa de transporte pura** (sin cambio estructural, solo se añade `ApiError` con `.status`)
+- Hooks pre-construidos en `hooks/useProjects.ts`, `hooks/useTasks.ts`, `hooks/useSessions.ts`
+- Los hooks encapsulan: `queryKey`, `invalidateQueries`, `toast.success/error`, flag `enabled`
+- Los componentes **nunca** importan `useQueryClient()` ni definen query keys directamente
+- Fetches imperativos one-off (ej. conteo antes de dialog de borrado) siguen usando `api.*` directamente — esto es legítimo
+
+### Por qué esta arquitectura (y no las otras)
+- **Descartado Command/Dispatch** (Agente 1): pierde inferencia de tipos por acción sin overloads complejos
+- **Descartado Repository layer completo** (Agente 2): 14 archivos de boilerplate antes de lógica real; se reserva como upgrade path
+- **Descartado ProjectService monolítico** (Agente 3 backend): reproduce el problema de `projects.ts` en 6 semanas
+
+## Issues completados (en `issues/done/`)
+| Issue | Descripción |
+|-------|-------------|
+| 001 | Monorepo + listar proyectos |
+| 002 | Crear y editar proyectos |
+| 003 | Eliminar proyecto con confirmación |
+| 004 | Página de proyecto con pestañas Tareas/Sesiones |
+
+## Issues pendientes (en orden de prioridad)
+| Issue | Descripción | Notas |
+|-------|-------------|-------|
+| **012** | RFC service layer + API client | ⚠️ **Implementar ANTES que 005** — establece el patrón |
+| 005 | Crear y editar tareas | Necesita `TaskService` + `useCreateTask` |
+| 006 | Cambiar estado y eliminar tareas | Necesita `useUpdateTask`, `useDeleteTask` |
+| 007 | Progreso de proyectos | Necesita `ProjectService.list()` con conteos |
+| 008 | Iniciar y terminar sesión de estudio | Necesita `SessionService.start/close` con guard de sesión activa |
+| 009 | Recuperación de sesión huérfana | Depende de 008 |
+| 010 | Historial de sesiones por proyecto | Depende de 008 |
+| 011 | Dashboard | Necesita `DashboardService` con algoritmo de streak |
+
+## Bloqueantes
+- **Ninguno técnico.** El RFC 012 está listo para implementarse.
+- Los tests requieren configurar Prisma con SQLite en memoria (`file::memory:`) — no hay setup de test todavía en ninguna app.
+
+## Próximo paso exacto
+
+**Implementar el RFC 012** siguiendo este orden:
+
+1. Crear `apps/api/src/lib/serviceResult.ts` y `apps/api/src/lib/sendResult.ts`
+2. Crear `apps/api/src/services/projects.ts` — extraer lógica de `routes/projects.ts`
+3. Reemplazar `apps/api/src/routes/projects.ts` con handlers de 1 línea
+4. Verificar que los endpoints existentes siguen funcionando (`GET /api/projects`, `POST`, `PATCH`, `DELETE`)
+5. Añadir `ApiError` a `apps/web/src/lib/api.ts`
+6. Crear `apps/web/src/hooks/useProjects.ts`
+7. Migrar `ProjectsPage.tsx` y `ProjectPage.tsx` a los nuevos hooks
+8. Sólo entonces, continuar con issue 005 (tareas) usando el patrón establecido
+
+El RFC completo con firmas TypeScript, tests boundary, y estrategia de migración está en `issues/012-rfc-service-layer-api-client.md`.
+
