@@ -38,3 +38,16 @@ export interface StudySession {
 export interface StudySessionWithProject extends StudySession {
   projectName: string
 }
+
+export interface DashboardProjectProgress {
+  id: string
+  name: string
+  completedTasks: number
+  totalTasks: number
+}
+
+export interface DashboardData {
+  weeklyHours: number
+  streak: number
+  projects: DashboardProjectProgress[]
+}

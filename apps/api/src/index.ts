@@ -4,6 +4,7 @@ import cors from 'cors'
 import projectsRouter from './routes/projects'
 import tasksRouter from './routes/tasks'
 import sessionsRouter from './routes/sessions'
+import dashboardRouter from './routes/dashboard'
 
 const app = express()
 const PORT = process.env.PORT ?? 3001
@@ -14,6 +15,7 @@ app.use(express.json())
 app.use('/api/projects', projectsRouter)
 app.use('/api/tasks', tasksRouter)
 app.use('/api/sessions', sessionsRouter)
+app.use('/api/dashboard', dashboardRouter)
 
 app.listen(PORT, () => {
   console.log(`API corriendo en http://localhost:${PORT}`)
