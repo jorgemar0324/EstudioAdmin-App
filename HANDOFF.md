@@ -366,3 +366,83 @@ Implementar **issue 009 — Recuperación de sesión huérfana**:
 7. Mover `issues/009-recuperacion-sesion-huerfana.md` a `issues/done/`.
 
 Issue 010 puede seguir inmediatamente después (solo agrega `GET /api/projects/:id/sessions` con filtro `endedAt != null` y la pestaña Sesiones en ProjectPage).
+
+---
+
+# Handoff — Sesión 5 (2026-05-26)
+
+## Proyecto
+**Administración de Estudio** — App web para gestionar proyectos académicos (materias, cursos online, side projects), tareas y sesiones de estudio cronometradas. Monorepo TypeScript.
+
+## Stack técnico
+- **Frontend:** React 18 + Vite + Tailwind CSS + shadcn/ui + TanStack Query + React Router + Sonner
+- **Backend:** Node.js + Express + Prisma ORM + PostgreSQL (Supabase)
+- **Testing:** Vitest — 13 tests pasando (3 archivos de backend: projects, tasks, sessions)
+- **Shared types:** `packages/shared/src/index.ts` — `Project`, `ProjectWithProgress`, `Task`, `StudySession`, `StudySessionWithProject`, enums
+
+## Lo que se construyó en esta sesión
+
+### Issue 009 — Recuperación de sesión huérfana
+| Archivo | Cambio |
+|---------|--------|
+| `apps/api/src/services/sessions.ts` | `discard(id)` — elimina sin calcular duración (404 si no existe). `getActive()` y `create()` ahora incluyen `project.name` via Prisma `include`, mapeado a `projectName` flat. |
+| `apps/api/src/routes/sessions.ts` | Añade `DELETE /:id` → `sessionService.discard()` con status 204 |
+| `apps/api/src/__tests__/services/sessions.test.ts` | 3 tests nuevos: `discard` 404, `discard` ok (verifica que no llama `update`), `getActive` incluye `projectName`. Mock de `create` actualizado con `project.name`. |
+| `packages/shared/src/index.ts` | Añade `StudySessionWithProject extends StudySession { projectName: string }` |
+| `apps/web/src/lib/api.ts` | `api.sessions.getActive/create/close` tipados como `StudySessionWithProject`. Añade `api.sessions.discard(id)`. |
+| `apps/web/src/contexts/ActiveSessionContext.tsx` | Añade `discard()`, `showOrphanDialog`, `dismissOrphanDialog`. Detecta sesión huérfana en primer load con dos refs (`initialCheckDone`, `startedLocally`). |
+| `apps/web/src/components/OrphanSessionDialog.tsx` | **NUEVO** — Dialog con nombre de proyecto, tiempo transcurrido formateado, botones "Terminar ahora" y "Descartar sesión". |
+| `apps/web/src/App.tsx` | Renderiza `<OrphanSessionDialog />` junto al Navbar (dentro de `ActiveSessionProvider`). |
+
+## Decisiones arquitectónicas
+
+### Detección huérfana con dos refs
+- `initialCheckDone`: evita mostrar el dialog más de una vez por carga
+- `startedLocally`: evita falso positivo cuando el usuario inicia una sesión en esta misma pestaña (el query se actualiza con `setQueryData` y sin el ref dispararía el diálogo al refrescar el `isLoading`)
+- El diálogo se muestra si: `!isLoading && session && !startedLocally.current` en el primer ciclo
+
+### `projectName` plano en lugar de `project.name` anidado
+- `getActive()` y `create()` hacen `include: { project: { select: { name: true } } }` y luego desestructuran: `const { project, ...fields } = raw` → `{ ...fields, projectName: project.name }`
+- Mantiene la forma del DTO plana, coherente con el resto de los tipos de shared
+
+## Issues completados (`issues/done/`)
+001, 002, 003, 004, 005, 006, 007, 008, **009** — todos en `issues/done/`
+
+## Issues pendientes (en orden de prioridad)
+| Issue | Descripción | Desbloqueado por |
+|-------|-------------|-----------------|
+| **010** | Historial de sesiones por proyecto — `GET /api/projects/:id/sessions` + pestaña Sesiones en `ProjectPage` | 008 ✓ |
+| **011** | Dashboard — `DashboardService` con `weeklyHours`, `streak` (algoritmo de racha), progreso por proyecto | 007 ✓ + 010 |
+
+El issue 012 es solo documentación RFC, ya implementado desde la sesión 4.
+
+## Bloqueantes
+- Ninguno. Issue 010 está totalmente desbloqueado.
+- Issue 011 depende de 010 (para tener sesiones cerradas con `durationMinutes`).
+
+## Estado actual de tests
+```
+apps/api/__tests__/services/projects.test.ts  — 3 tests ✓
+apps/api/__tests__/services/sessions.test.ts  — 8 tests ✓
+apps/api/__tests__/services/tasks.test.ts     — 2 tests ✓
+Total: 13 tests backend, 0 frontend
+```
+
+## Próximo paso exacto (para `bash ralph/once.sh`)
+
+Implementar **issue 010 — Historial de sesiones por proyecto**:
+
+### Backend
+1. `SessionService.listByProject(projectId)` — devuelve sesiones con `endedAt != null`, ordenadas por `startedAt` DESC. Devuelve 404 si el proyecto no existe.
+2. `GET /api/projects/:id/sessions` en `routes/projects.ts` → `sendResult(res, await sessionService.listByProject(req.params.id))`
+3. Tests: lista solo sesiones cerradas, orden descendente, 404 si proyecto no existe, lista vacía si no hay sesiones cerradas.
+
+### Frontend
+4. `api.sessions.listByProject(projectId)` en `api.ts` → `request<StudySession[]>(...)`
+5. Hook `useSessions(projectId)` en `hooks/useSessions.ts` (o en `useTasks.ts` si se prefiere mismo archivo)
+6. Función `formatDuration(minutes: number): string` — "X min" si < 60, "Xh Ymin" si ≥ 60
+7. Función `formatSessionDate(dateStr: string): string` — "lunes 12 de mayo" (usar `Intl.DateTimeFormat`)
+8. Reemplazar el placeholder en la pestaña "Sesiones" de `ProjectPage.tsx` con la lista real
+9. Cada entrada: fecha, hora de inicio, duración formateada. Estado vacío: "Aún no hay sesiones registradas"
+
+La pestaña ya existe en `ProjectPage.tsx` (línea ~118) con un placeholder de texto. Solo hay que reemplazarlo.
