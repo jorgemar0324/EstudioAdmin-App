@@ -1,4 +1,4 @@
-import type { Project, ProjectWithProgress, Task, StudySessionWithProject, Priority, ProjectType, TaskStatus } from '@repo/shared'
+import type { Project, ProjectWithProgress, Task, StudySession, StudySessionWithProject, Priority, ProjectType, TaskStatus } from '@repo/shared'
 
 export class ApiError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -48,6 +48,7 @@ interface UpdateTaskPayload {
 export const api = {
   sessions: {
     getActive: () => request<StudySessionWithProject | null>('/api/sessions/active'),
+    listByProject: (projectId: string) => request<StudySession[]>(`/api/projects/${projectId}/sessions`),
     create: (projectId: string) =>
       request<StudySessionWithProject>(`/api/projects/${projectId}/sessions`, { method: 'POST' }),
     close: (id: string) =>

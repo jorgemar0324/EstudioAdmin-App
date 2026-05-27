@@ -5,6 +5,7 @@ const mockDb = {
   studySession: {
     findFirst: vi.fn(),
     findUnique: vi.fn(),
+    findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -153,5 +154,41 @@ describe('SessionService.getActive', () => {
 
     expect(result.ok).toBe(true)
     if (result.ok && result.data) expect(result.data.projectName).toBe('Matemáticas')
+  })
+})
+
+describe('SessionService.listByProject', () => {
+  let service: SessionService
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    service = new SessionService(mockDb as never)
+  })
+
+  it('devuelve 404 si el proyecto no existe', async () => {
+    mockDb.project.findUnique.mockResolvedValue(null)
+
+    const result = await service.listByProject('id-inexistente')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.status).toBe(404)
+  })
+
+  it('devuelve solo sesiones cerradas ordenadas por startedAt descendente', async () => {
+    mockDb.project.findUnique.mockResolvedValue({ id: 'p1' })
+    const older = { id: 's1', projectId: 'p1', startedAt: new Date('2024-01-01T09:00:00Z'), endedAt: new Date('2024-01-01T10:00:00Z'), durationMinutes: 60 }
+    const newer = { id: 's2', projectId: 'p1', startedAt: new Date('2024-01-02T09:00:00Z'), endedAt: new Date('2024-01-02T10:00:00Z'), durationMinutes: 60 }
+    const active = { id: 's3', projectId: 'p1', startedAt: new Date('2024-01-03T09:00:00Z'), endedAt: null, durationMinutes: null }
+    mockDb.studySession.findMany.mockResolvedValue([newer, older])
+
+    const result = await service.listByProject('p1')
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.data).toHaveLength(2)
+      expect(result.data[0].id).toBe('s2')
+      expect(result.data[1].id).toBe('s1')
+      expect(result.data.find(s => s.id === active.id)).toBeUndefined()
+    }
   })
 })

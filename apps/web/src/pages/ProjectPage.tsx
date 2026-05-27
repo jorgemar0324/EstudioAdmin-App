@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ClipboardList, Plus, PlayCircle } from 'lucide-react'
-import type { Task, TaskStatus } from '@repo/shared'
+import { ArrowLeft, ClipboardList, Plus, PlayCircle, Clock } from 'lucide-react'
+import type { StudySession, Task, TaskStatus } from '@repo/shared'
 import { useProject } from '@/hooks/useProjects'
 import { useTasks, useUpdateTask, useDeleteTask } from '@/hooks/useTasks'
+import { useSessions } from '@/hooks/useSessions'
 import { useActiveSession } from '@/contexts/ActiveSessionContext'
 import { Button } from '@/components/ui/button'
 import { TaskCard } from '@/components/TaskCard'
@@ -19,6 +20,7 @@ export function ProjectPage() {
 
   const { project, isLoading: projectLoading } = useProject(id)
   const { tasks, isLoading: tasksLoading } = useTasks(id!, { enabled: activeTab === 'tareas' })
+  const { sessions, isLoading: sessionsLoading } = useSessions(id!, { enabled: activeTab === 'sesiones' })
 
   const { update } = useUpdateTask()
   const { remove, isPending: isDeleting } = useDeleteTask()
@@ -126,9 +128,7 @@ export function ProjectPage() {
         />
       )}
       {activeTab === 'sesiones' && (
-        <div className="py-12 text-center text-muted-foreground">
-          <p>Historial de sesiones disponible próximamente.</p>
-        </div>
+        <SessionsTab sessions={sessions} loading={sessionsLoading} />
       )}
 
       <TaskFormModal
@@ -150,6 +150,63 @@ export function ProjectPage() {
         onConfirm={handleConfirmDelete}
         loading={isDeleting}
       />
+    </div>
+  )
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}min`
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+}
+
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+}
+
+function SessionsTab({ sessions, loading }: { sessions: StudySession[]; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12 text-muted-foreground">
+        Cargando sesiones...
+      </div>
+    )
+  }
+
+  if (sessions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <Clock className="mb-4 h-12 w-12 text-muted-foreground" />
+        <p className="text-muted-foreground">Aún no hay sesiones registradas.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {sessions.map((session) => (
+        <div
+          key={session.id}
+          className="flex items-center justify-between rounded-lg border px-4 py-3"
+        >
+          <div>
+            <p className="text-sm font-medium capitalize">{formatDate(session.startedAt)}</p>
+            <p className="text-xs text-muted-foreground">{formatTime(session.startedAt)}</p>
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {session.durationMinutes != null ? formatDuration(session.durationMinutes) : '—'}
+          </span>
+        </div>
+      ))}
     </div>
   )
 }

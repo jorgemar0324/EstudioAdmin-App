@@ -47,6 +47,21 @@ export class SessionService {
     }
   }
 
+  async listByProject(projectId: string) {
+    try {
+      const exists = await this.db.project.findUnique({ where: { id: projectId } })
+      if (!exists) return { ok: false as const, status: 404 as const, message: 'Proyecto no encontrado' }
+
+      const sessions = await this.db.studySession.findMany({
+        where: { projectId, endedAt: { not: null } },
+        orderBy: { startedAt: 'desc' },
+      })
+      return { ok: true as const, data: sessions }
+    } catch {
+      return { ok: false as const, status: 500 as const, message: 'Error al obtener sesiones' }
+    }
+  }
+
   async close(id: string) {
     try {
       const session = await this.db.studySession.findUnique({ where: { id } })
