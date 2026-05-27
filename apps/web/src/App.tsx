@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { queryClient } from '@/lib/queryClient'
 import { ActiveSessionProvider } from '@/contexts/ActiveSessionContext'
 import { Navbar } from '@/components/Navbar'
+import { OrphanSessionDialog } from '@/components/OrphanSessionDialog'
 import { ProjectsPage } from '@/pages/ProjectsPage'
 import { ProjectPage } from '@/pages/ProjectPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -14,6 +15,7 @@ export function App() {
       <ActiveSessionProvider>
         <BrowserRouter>
           <Navbar />
+          <OrphanSessionDialog />
           <main>
             <Routes>
               <Route path="/" element={<ProjectsPage />} />

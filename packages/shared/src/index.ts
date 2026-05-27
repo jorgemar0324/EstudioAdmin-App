@@ -34,3 +34,7 @@ export interface StudySession {
   endedAt: string | null
   durationMinutes: number | null
 }
+
+export interface StudySessionWithProject extends StudySession {
+  projectName: string
+}

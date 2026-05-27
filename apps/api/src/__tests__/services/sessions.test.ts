@@ -7,6 +7,7 @@ const mockDb = {
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
   },
   project: {
     findUnique: vi.fn(),
@@ -34,13 +35,18 @@ describe('SessionService.create', () => {
   it('crea sesión si no hay ninguna activa', async () => {
     mockDb.project.findUnique.mockResolvedValue({ id: 'p1' })
     mockDb.studySession.findFirst.mockResolvedValue(null)
-    const newSession = { id: 'new-session', projectId: 'p1', startedAt: new Date(), endedAt: null, durationMinutes: null }
-    mockDb.studySession.create.mockResolvedValue(newSession)
+    mockDb.studySession.create.mockResolvedValue({
+      id: 'new-session', projectId: 'p1', startedAt: new Date(), endedAt: null, durationMinutes: null,
+      project: { name: 'Proyecto Test' },
+    })
 
     const result = await service.create('p1')
 
     expect(result.ok).toBe(true)
-    if (result.ok) expect(result.data.id).toBe('new-session')
+    if (result.ok) {
+      expect(result.data.id).toBe('new-session')
+      expect(result.data.projectName).toBe('Proyecto Test')
+    }
   })
 })
 
@@ -87,5 +93,65 @@ describe('SessionService.close', () => {
 
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.status).toBe(400)
+  })
+})
+
+describe('SessionService.discard', () => {
+  let service: SessionService
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    service = new SessionService(mockDb as never)
+  })
+
+  it('devuelve 404 si la sesión no existe', async () => {
+    mockDb.studySession.findUnique.mockResolvedValue(null)
+
+    const result = await service.discard('id-inexistente')
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.status).toBe(404)
+  })
+
+  it('elimina la sesión sin calcular duración y devuelve ok', async () => {
+    const session = { id: 'session-1', projectId: 'p1', startedAt: new Date(), endedAt: null, durationMinutes: null }
+    mockDb.studySession.findUnique.mockResolvedValue(session)
+    mockDb.studySession.delete.mockResolvedValue(session)
+
+    const result = await service.discard('session-1')
+
+    expect(result.ok).toBe(true)
+    expect(mockDb.studySession.delete).toHaveBeenCalledWith({ where: { id: 'session-1' } })
+    expect(mockDb.studySession.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('SessionService.getActive', () => {
+  let service: SessionService
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    service = new SessionService(mockDb as never)
+  })
+
+  it('devuelve null cuando no hay sesión activa', async () => {
+    mockDb.studySession.findFirst.mockResolvedValue(null)
+
+    const result = await service.getActive()
+
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.data).toBeNull()
+  })
+
+  it('incluye projectName en la sesión activa', async () => {
+    mockDb.studySession.findFirst.mockResolvedValue({
+      id: 'session-1', projectId: 'p1', startedAt: new Date(), endedAt: null, durationMinutes: null,
+      project: { name: 'Matemáticas' },
+    })
+
+    const result = await service.getActive()
+
+    expect(result.ok).toBe(true)
+    if (result.ok && result.data) expect(result.data.projectName).toBe('Matemáticas')
   })
 })

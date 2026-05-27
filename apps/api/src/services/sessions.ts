@@ -5,8 +5,13 @@ export class SessionService {
 
   async getActive() {
     try {
-      const session = await this.db.studySession.findFirst({ where: { endedAt: null } })
-      return { ok: true as const, data: session }
+      const raw = await this.db.studySession.findFirst({
+        where: { endedAt: null },
+        include: { project: { select: { name: true } } },
+      })
+      if (!raw) return { ok: true as const, data: null }
+      const { project, ...fields } = raw
+      return { ok: true as const, data: { ...fields, projectName: project.name } }
     } catch {
       return { ok: false as const, status: 500 as const, message: 'Error al obtener sesión activa' }
     }
@@ -14,16 +19,31 @@ export class SessionService {
 
   async create(projectId: string) {
     try {
-      const project = await this.db.project.findUnique({ where: { id: projectId } })
-      if (!project) return { ok: false as const, status: 404 as const, message: 'Proyecto no encontrado' }
+      const exists = await this.db.project.findUnique({ where: { id: projectId } })
+      if (!exists) return { ok: false as const, status: 404 as const, message: 'Proyecto no encontrado' }
 
       const active = await this.db.studySession.findFirst({ where: { endedAt: null } })
       if (active) return { ok: false as const, status: 409 as const, message: 'Ya existe una sesión activa' }
 
-      const session = await this.db.studySession.create({ data: { projectId } })
-      return { ok: true as const, data: session }
+      const raw = await this.db.studySession.create({
+        data: { projectId },
+        include: { project: { select: { name: true } } },
+      })
+      const { project, ...fields } = raw
+      return { ok: true as const, data: { ...fields, projectName: project.name } }
     } catch {
       return { ok: false as const, status: 500 as const, message: 'Error al crear sesión' }
+    }
+  }
+
+  async discard(id: string) {
+    try {
+      const session = await this.db.studySession.findUnique({ where: { id } })
+      if (!session) return { ok: false as const, status: 404 as const, message: 'Sesión no encontrada' }
+      await this.db.studySession.delete({ where: { id } })
+      return { ok: true as const, data: undefined as void }
+    } catch {
+      return { ok: false as const, status: 500 as const, message: 'Error al descartar sesión' }
     }
   }
 

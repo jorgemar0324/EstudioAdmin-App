@@ -6,5 +6,6 @@ const router = Router()
 
 router.get('/active',   async (_req, res) => sendResult(res, await sessionService.getActive()))
 router.patch('/:id',    async (req,  res) => sendResult(res, await sessionService.close(req.params.id)))
+router.delete('/:id',   async (req,  res) => sendResult(res, await sessionService.discard(req.params.id), 204))
 
 export default router
