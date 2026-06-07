@@ -13,7 +13,14 @@
       "Bash(git *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\jorge\\\\Desktop\\\\Proyecto IA\\\\administracion-estudio\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(Format-Table -AutoSize)"
+      "Bash(Format-Table -AutoSize)",
+      "Bash(grep *)",
+      "Bash(curl -s -X POST http://localhost:3001/api/projects -H \"Content-Type: application/json\" -d '{\"name\":\"Álgebra Lineal\",\"type\":\"MATERIA\",\"priority\":\"ALTA\",\"description\":\"Curso de primer semestre\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/projects/cmpn9s3dp0000ltks9077enme/tasks -H 'Content-Type: application/json' -d '{\"title\":\"\",\"priority\":\"ALTA\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/projects/no-existe/tasks -H 'Content-Type: application/json' -d '{\"title\":\"Test\",\"priority\":\"ALTA\"}')",
+      "Bash(curl -s http://localhost:3001/api/projects/cmpn9s3dp0000ltks9077enme/tasks)",
+      "Bash(curl *)",
+      "Bash(npm test *)"
     ]
   }
 }
