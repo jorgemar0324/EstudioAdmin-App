@@ -140,6 +140,7 @@ apps/web/src/
 
 | Alternativa descartada | Razón |
 |---|---|
+
 | Sub-agente 1 completo | `execute(cmd)` pierde descubribilidad en IDE. `taskService.createTask(id, data)` supera siempre a `execute({ action: 'create', ... })` |
 | Sub-agente 2 completo | 14 archivos de boilerplate antes de lógica real. La capa Repository se justifica cuando los tests demuestran que necesitas mockear Prisma — no antes |
 | Sub-agente 3 completo | Un `ProjectService` que agrupa proyectos + tareas + sesiones replica en 6 semanas el mismo problema que tiene `projects.ts` hoy |

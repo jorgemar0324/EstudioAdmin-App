@@ -446,3 +446,55 @@ Implementar **issue 010 — Historial de sesiones por proyecto**:
 9. Cada entrada: fecha, hora de inicio, duración formateada. Estado vacío: "Aún no hay sesiones registradas"
 
 La pestaña ya existe en `ProjectPage.tsx` (línea ~118) con un placeholder de texto. Solo hay que reemplazarlo.
+
+---
+
+# Handoff — Sesión 6 (2026-06-07)
+
+## Proyecto
+**Administración de Estudio** — App web para gestionar proyectos académicos (materias, cursos online, side projects), tareas y sesiones de estudio cronometradas. Monorepo TypeScript.
+
+## Stack técnico
+- **Frontend:** React 18 + Vite + Tailwind CSS + shadcn/ui + TanStack Query + React Router + Sonner
+- **Backend:** Node.js + Express + Prisma ORM + PostgreSQL (Supabase)
+- **Testing:** Vitest — 34 tests pasando (4 archivos de backend: projects, tasks, sessions, dashboard)
+- **Shared types:** `packages/shared/src/index.ts`
+
+## Lo que se construyó en esta sesión
+
+Sesión ejecutada como agente `ralph/once.sh` (modo AFK). Issue 012 era el único abierto; la arquitectura ya estaba implementada, solo faltaban los hooks de sesiones y los tests del RFC.
+
+| Archivo | Cambio |
+|---------|--------|
+| `apps/web/src/hooks/useSessions.ts` | Añadidos `useActiveSession` (query staleTime 30s), `useStartSession` y `useCloseSession` (mutations con toast + invalidateQueries) |
+| `apps/api/src/__tests__/services/projects.test.ts` | Tests nuevos: ordering ALTA→MEDIA→BAJA; `delete()` retorna 404 si no existe y ok si existe |
+| `apps/api/src/__tests__/services/tasks.test.ts` | Tests nuevos: `listByProject()` ordena EN_PROGRESO>PENDIENTE>COMPLETADA; `create()` retorna 404 si projectId no existe |
+| `issues/done/012-rfc-service-layer-api-client.md` | Issue movido a done/ |
+
+## Decisiones arquitectónicas (acumuladas — sin cambios nuevos)
+- **ServiceResult\<T\>**: servicios devuelven `{ ok: true, data }` | `{ ok: false, status, message }`, nunca lanzan excepciones por casos esperados.
+- **sendResult()**: helper Express de 6 líneas — las rutas tienen 1 línea por handler.
+- **Hooks por dominio**: `useProjects`, `useTasks`, `useSessions` encapsulan queryKey, invalidateQueries y toasts — los componentes nunca importan `useQueryClient` directamente.
+- **Mock de PrismaClient** con `vi.fn()` en tests de servicio (sin SQLite en memoria, sin servidor Express).
+- **No hay frontend tests** — deuda técnica pendiente.
+
+## Issues completados (todos — en `issues/done/`)
+001 · 002 · 003 · 004 · 005 · 006 · 007 · 008 · 009 · 010 · 011 · 012
+
+**El backlog del PRD está completo.**
+
+## Issues pendientes
+**Ninguno.** No quedan issues abiertos en `issues/`.
+
+## Bloqueantes
+- Ninguno funcional.
+- Warnings de Vite sobre `esbuild` vs `oxc` (plugin `vite:react-babel`, cosmético).
+
+## Próximo paso exacto
+No hay issues abiertos. Las opciones son:
+
+1. **Tests de frontend** — configurar `renderHook` + `QueryClientProvider` de prueba para `useProjects`, `useTasks`, `useSessions` (deuda técnica del RFC 012).
+2. **Nuevas features** — revisar `issues/prd.md` y crear nuevos issues si se quiere ampliar la app.
+3. **QA manual** — `npm run dev`, recorrer el flujo completo: crear proyecto → tareas → iniciar/cerrar sesión → dashboard.
+
+Para ejecutar más trabajo AFK: añadir issues en `issues/` y correr `bash ralph/once.sh`.
