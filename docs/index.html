@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Software Journey — Administracion_Estudio</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #1a1d2e;
+      --bg3: #252840;
+      --accent: #7c6ff7;
+      --accent2: #56cfb2;
+      --accent3: #f7a04a;
+      --text: #e8eaf6;
+      --text2: #9fa8c0;
+      --border: #2e3150;
+      --code-bg: #13151f;
+      --danger: #e05c6b;
+      --success: #56cfb2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,17,23,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .nav-brand { font-weight: 700; font-size: 1rem; color: var(--accent); letter-spacing: -0.3px; }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      color: var(--text2); text-decoration: none; font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      padding: 6rem 2rem 4rem;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, rgba(124,111,247,0.12) 0%, transparent 70%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(124,111,247,0.15);
+      border: 1px solid rgba(124,111,247,0.3);
+      color: var(--accent);
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
+      padding: 0.25rem 0.75rem; border-radius: 99px;
+      margin-bottom: 1.5rem; text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800; letter-spacing: -1px;
+      line-height: 1.15; margin-bottom: 1.25rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.125rem; color: var(--text2);
+      max-width: 560px; margin: 0 auto 2.5rem;
+    }
+    .hero-meta {
+      display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
+    }
+    .hero-meta-item {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    }
+    .hero-meta-item .num {
+      font-size: 1.75rem; font-weight: 800; color: var(--accent);
+    }
+    .hero-meta-item .label { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* LAYOUT */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+
+    /* SECTIONS */
+    .section {
+      padding: 5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-header {
+      display: flex; align-items: flex-start; gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+    .section-number {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+      color: var(--accent); text-transform: uppercase;
+      background: rgba(124,111,247,0.1);
+      border: 1px solid rgba(124,111,247,0.25);
+      padding: 0.2rem 0.6rem; border-radius: 4px;
+      white-space: nowrap; margin-top: 0.35rem;
+    }
+    .section-header h2 {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700; letter-spacing: -0.5px;
+      line-height: 1.25;
+    }
+    .section-header h2 span { color: var(--accent2); }
+
+    /* PROSE */
+    .prose h3 {
+      font-size: 1.1rem; font-weight: 600;
+      color: var(--text); margin: 2rem 0 0.75rem;
+    }
+    .prose p { color: var(--text2); margin-bottom: 1rem; }
+    .prose strong { color: var(--text); }
+
+    /* CODE */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      margin: 1rem 0 1.5rem;
+    }
+    code { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; }
+    .inline-code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 0.1em 0.4em; border-radius: 4px;
+      font-family: monospace; font-size: 0.875em;
+      color: var(--accent2);
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h4 {
+      font-size: 0.95rem; font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .card p { font-size: 0.9rem; color: var(--text2); margin: 0; }
+
+    .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    @media (max-width: 640px) { .card-grid { grid-template-columns: 1fr; } }
+
+    /* TAGS */
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem; font-weight: 600;
+      padding: 0.2rem 0.6rem; border-radius: 99px;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .tag-deep { background: rgba(86,207,178,0.15); color: var(--accent2); border: 1px solid rgba(86,207,178,0.3); }
+    .tag-shallow { background: rgba(247,160,74,0.15); color: var(--accent3); border: 1px solid rgba(247,160,74,0.3); }
+    .tag-leak { background: rgba(224,92,107,0.15); color: var(--danger); border: 1px solid rgba(224,92,107,0.3); }
+
+    /* TIMELINE */
+    .timeline { position: relative; padding-left: 1.5rem; margin: 2rem 0; }
+    .timeline::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 2px; background: var(--border);
+    }
+    .timeline-item {
+      position: relative; margin-bottom: 2rem; padding-left: 1.25rem;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute; left: -1.6rem; top: 0.4rem;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+    }
+    .timeline-item h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .timeline-item p { font-size: 0.875rem; color: var(--text2); }
+
+    /* COMPARISON */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 1.5rem 0; }
+    @media (max-width: 640px) { .compare-grid { grid-template-columns: 1fr; } }
+    .compare-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .compare-card.winner { border-color: var(--accent2); }
+    .compare-card h5 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .compare-card ul { list-style: none; }
+    .compare-card li { font-size: 0.82rem; color: var(--text2); padding: 0.2rem 0; }
+    .compare-card li::before { content: '→ '; color: var(--accent); }
+
+    /* VERDICT */
+    .verdict {
+      background: linear-gradient(135deg, rgba(124,111,247,0.08), rgba(86,207,178,0.08));
+      border: 1px solid rgba(124,111,247,0.25);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+    .verdict h3 { color: var(--accent2); margin-bottom: 1rem; }
+
+    /* FOOTER */
+    footer {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text2);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* HIGHLIGHT */
+    .highlight-box {
+      background: var(--bg3);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+      color: var(--text2);
+    }
+    .highlight-box strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">Administracion_Estudio</span>
+  <div class="nav-links">
+    <a href="#seccion1">Bala Trazadora</a>
+    <a href="#seccion2">Anatomía</a>
+    <a href="#seccion3">Veredicto</a>
+    <a href="https://github.com/jorgemar0324/EstudioAdmin-App" target="_blank">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Software Journey · AI Engineer Workshop 2026</div>
+  <h1>Co-creación <span>hombre–máquina</span><br/>en la práctica</h1>
+  <p>Bitácora crítica del desarrollo de <strong>Administracion_Estudio</strong> — una app de gestión de estudio construida con Claude Code, analizada bajo la óptica de <em>A Philosophy of Software Design</em> de John Ousterhout.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><span class="num">12</span><span class="label">Issues cerrados</span></div>
+    <div class="hero-meta-item"><span class="num">3</span><span class="label">Fases de desarrollo</span></div>
+    <div class="hero-meta-item"><span class="num">2</span><span class="label">Handoffs documentados</span></div>
+    <div class="hero-meta-item"><span class="num">3</span><span class="label">Sub-agentes simulados</span></div>
+  </div>
+</section>
+
+<!-- SECCIÓN 1 -->
+<section class="section" id="seccion1">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-number">Sección 1</span>
+      <h2>La <span>Bala Trazadora</span> y el Enrutamiento de las Skills</h2>
+    </div>
+
+    <div class="prose">
+      <h3>Cómo /grill-me alteró las asunciones iniciales</h3>
+      <p>El <strong>Client Brief</strong> original describía una app sencilla: crear proyectos, agregar tareas, cronometrar sesiones. Antes de escribir una línea de código, la skill <code class="inline-code">/grill-me</code> interrogó cada asunción con preguntas que el brief no respondía.</p>
+
+      <div class="highlight-box">
+        <strong>Ejemplo concreto:</strong> El brief decía "ver un dashboard simple con horas de la semana". <code class="inline-code">/grill-me</code> preguntó: ¿la semana es lunes-domingo o rolling 7 días? ¿Qué mínimo de minutos cuenta como sesión válida para la racha? ¿La racha se rompe si el usuario no estudia hoy pero sí ayer?
+      </div>
+
+      <p>Estas preguntas forzaron decisiones que de otro modo Ralph hubiera inventado: la semana es <strong>lunes a domingo</strong> (no rolling), el mínimo para la racha es <strong>10 minutos</strong> de sesión, y la racha se cuenta desde ayer hacia atrás — lo que evitó un bug de estado donde el usuario pierde su racha si aún no ha estudiado hoy.</p>
+
+      <p>El árbol de diseño recorrido por <code class="inline-code">/grill-me</code> produjo <strong>20 decisiones documentadas</strong> antes de que Ralph tocara el repositorio. El PRD resultante no fue una lista de features — fue un contrato de comportamiento exacto.</p>
+
+      <h3>La Bala Trazadora: el issue más arriesgado primero</h3>
+      <p>La analogía de la <strong>Bala Trazadora</strong> (<em>Tracer Bullet</em>) propone atacar primero el camino de integración más incierto del sistema para obtener feedback arquitectónico temprano.</p>
+
+      <p>En este proyecto, el issue más arriesgado no era crear proyectos ni listar tareas — era el <strong>issue 008: timer de sesiones de estudio</strong>. Este issue requería:</p>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <h4>🔗 Integración de 4 capas</h4>
+        <p>Frontend timer local → API REST → Prisma → PostgreSQL en Supabase, todo en tiempo real sin polling.</p>
+      </div>
+      <div class="card">
+        <h4>⚡ Estado global de React</h4>
+        <p>El timer activo debía ser visible en la Navbar desde cualquier página — requirió Context API global.</p>
+      </div>
+      <div class="card">
+        <h4>🔄 Caso edge crítico</h4>
+        <p>Sesiones huérfanas: ¿qué pasa si el usuario cierra el navegador con una sesión activa?</p>
+      </div>
+      <div class="card">
+        <h4>⏱️ Sincronización de tiempo</h4>
+        <p>El timer frontend se calcula desde <code class="inline-code">startedAt</code> del backend — no desde el estado local — para sobrevivir recargas.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>Al forzar a Ralph a implementar el issue 001 (monorepo + listar proyectos) como primera bala trazadora, obtuvimos feedback inmediato sobre la configuración de Prisma con Supabase, el proxy de Vite hacia Express, y los tipos compartidos en <code class="inline-code">packages/shared</code> — todo antes de construir features reales. Los issues 002-004 confirmaron que la arquitectura aguantaba. El issue 008 entonces fue ejecutado sobre cimientos verificados.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>Issue 001 — Bala trazadora inicial</h4>
+        <p>Monorepo + listar proyectos. Verificó: Prisma ↔ Supabase, Vite proxy, tipos compartidos.</p>
+      </div>
+      <div class="timeline-item">
+        <h4>Issues 002-004 — Confirmación arquitectónica</h4>
+        <p>CRUD completo de proyectos y página de tareas. Confirmó que el patrón de rutas Express escalaba.</p>
+      </div>
+      <div class="timeline-item">
+        <h4>Checkpoint arquitectónico (entre 004 y 005)</h4>
+        <p><code class="inline-code">/improve-codebase-architecture</code> detectó 5 fricciones. Se refactorizó a Service Layer antes de continuar.</p>
+      </div>
+      <div class="timeline-item">
+        <h4>Issues 005-011 — Sobre cimientos limpios</h4>
+        <p>Tareas, sesiones, dashboard. Cada issue ejecutado en &lt;15 min gracias al Service Layer.</p>
+      </div>
+      <div class="timeline-item">
+        <h4>Issue 012 — RFC completado</h4>
+        <p>Formalización del Service Layer como patrón oficial del proyecto.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 2 -->
+<section class="section" id="seccion2">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-number">Sección 2</span>
+      <h2>Anatomía de la <span>Complejidad</span></h2>
+    </div>
+
+    <div class="prose">
+      <h3><span class="tag tag-deep">Módulos Profundos</span> — Donde el agente acertó</h3>
+      <p>Un <strong>Módulo Profundo</strong> (Ousterhout, cap. 4) oculta una complejidad algorítmica significativa detrás de una interfaz extremadamente simple. Los mejores ejemplos del proyecto:</p>
+    </div>
+
+    <div class="card" style="border-color: rgba(86,207,178,0.3);">
+      <h4>📦 DashboardService.get() — Complejidad oculta detrás de una firma trivial</h4>
+      <p>Esta función única recibe solo una fecha y devuelve tres métricas. Internamente ejecuta dos queries en paralelo, calcula la semana UTC, filtra sesiones válidas y cuenta rachas con lógica de fechas no trivial.</p>
+<pre><code>// Interfaz: una línea, un parámetro
+async get(now: Date = new Date()): Promise&lt;ServiceResult&lt;DashboardData&gt;&gt;
+
+// Internamente oculta:
+// - getWeekBounds(): cálculo de lunes-domingo en UTC
+// - calcStreak(): iterar días hacia atrás con Set de fechas
+// - calcWeeklyHours(): filtrar por ventana semanal
+// - Promise.all([sessions, projects]): queries paralelas</code></pre>
+      <p>El caller (<code class="inline-code">DashboardPage.tsx</code>) no sabe que existen estas funciones. Solo llama <code class="inline-code">useDashboard()</code> y recibe los datos.</p>
+    </div>
+
+    <div class="card" style="border-color: rgba(86,207,178,0.3);">
+      <h4>🚀 sendResult() — El helper más pequeño del proyecto</h4>
+      <p>6 líneas que eliminaron todo el <code class="inline-code">try/catch</code> duplicado de las rutas. Cada handler del router quedó en exactamente 1 línea.</p>
+<pre><code>// Antes del refactor (cada ruta):
+router.get('/', async (_req, res) => {
+  try {
+    const projects = await projectService.list()
+    res.json(projects)
+  } catch {
+    res.status(500).json({ error: 'Error interno' })
+  }
+})
+
+// Después con sendResult():
+router.get('/', async (_req, res) =>
+  sendResult(res, await projectService.list())
+)</code></pre>
+    </div>
+
+    <div class="card" style="border-color: rgba(86,207,178,0.3);">
+      <h4>⚡ ActiveSessionContext — Estado global de timer sin prop drilling</h4>
+      <p>El contexto expone una interfaz de 6 acciones simples (<code class="inline-code">start</code>, <code class="inline-code">stop</code>, <code class="inline-code">discard</code>, <code class="inline-code">elapsedSeconds</code>…) y oculta internamente: detección de sesión huérfana, timer local con <code class="inline-code">setInterval</code>, sincronización con TanStack Query y manejo de refs para evitar re-renders.</p>
+    </div>
+
+    <div class="prose" style="margin-top: 2.5rem;">
+      <h3><span class="tag tag-shallow">Módulos Superficiales</span> — Donde la IA falló inicialmente</h3>
+      <p>Un <strong>Módulo Superficial</strong> (Ousterhout, cap. 4) tiene una interfaz casi tan compleja como su implementación — no oculta nada significativo. El agente produjo este antipatrón en los primeros 4 issues:</p>
+    </div>
+
+    <div class="card" style="border-color: rgba(247,160,74,0.3);">
+      <h4>⚠️ routes/projects.ts original — 172 líneas mezclando 4 responsabilidades</h4>
+      <p>Ralph colocó validación, lógica de ordenamiento, acceso a Prisma y manejo de respuestas HTTP en un único archivo. Para entender cómo se ordenaban las tareas, había que leer todo el archivo.</p>
+<pre><code>// Antipatrón: constantes de negocio en la capa HTTP
+const PRIORITY_ORDER: Record&lt;string, number&gt; = { ALTA: 0, MEDIA: 1, BAJA: 2 }
+const VALID_TYPES = ['MATERIA', 'CURSO_ONLINE', 'SIDE_PROJECT']
+
+router.post('/', async (req, res) => {
+  // Validación inline...
+  if (!name || name.trim() === '') return res.status(400).json(...)
+  if (!VALID_TYPES.includes(type)) return res.status(400).json(...)
+  // Acceso directo a Prisma...
+  const project = await prisma.project.create({ data: {...} })
+  // Respuesta HTTP...
+  res.status(201).json(project)
+})</code></pre>
+      <p><strong>Directriz aplicada:</strong> En el checkpoint arquitectónico (después del issue 004), se instruyó explícitamente a Claude: <em>"Extrae toda la lógica de negocio a una clase de servicio por dominio. El router solo debe saber a quién llamar y cómo responder."</em></p>
+    </div>
+
+    <div class="prose" style="margin-top: 2.5rem;">
+      <h3><span class="tag tag-leak">Fuga de Información</span> — Detalles de DB filtrándose hacia la UI</h3>
+      <p>Una <strong>Fuga de Información</strong> (<em>Information Leakage</em>, Ousterhout, cap. 5) ocurre cuando los detalles de implementación de un módulo se exponen hacia capas superiores. El proyecto tuvo dos casos concretos:</p>
+    </div>
+
+    <div class="card" style="border-color: rgba(224,92,107,0.3);">
+      <h4>🔴 Caso 1 — Strings de Prisma expuestos como tipos en la UI</h4>
+      <p>En los primeros issues, <code class="inline-code">TaskCard.tsx</code> comparaba directamente con <code class="inline-code">'COMPLETADA'</code>, <code class="inline-code">'EN_PROGRESO'</code> — strings del enum de Prisma. Si el schema cambiaba, había que buscar y reemplazar en toda la UI.</p>
+      <p><strong>Corrección:</strong> Los tipos <code class="inline-code">TaskStatus</code>, <code class="inline-code">Priority</code>, <code class="inline-code">ProjectType</code> se centralizaron en <code class="inline-code">packages/shared/src/index.ts</code>. La UI importa del shared package, nunca del schema de Prisma directamente.</p>
+    </div>
+
+    <div class="card" style="border-color: rgba(224,92,107,0.3);">
+      <h4>🔴 Caso 2 — _count de Prisma expuesto en la respuesta de API</h4>
+      <p>El endpoint <code class="inline-code">GET /api/projects/:id</code> retornaba el objeto <code class="inline-code">_count: { tasks, sessions }</code> directamente desde Prisma. El frontend tenía que saber que la propiedad se llamaba <code class="inline-code">_count</code> — un detalle de implementación del ORM.</p>
+      <p><strong>Corrección parcial:</strong> Para el listado general, <code class="inline-code">ProjectService.list()</code> mapea a <code class="inline-code">completedTasks</code> y <code class="inline-code">totalTasks</code> — nombres semánticos del dominio. El endpoint de detalle aún expone <code class="inline-code">_count</code> y queda documentado como deuda técnica en el RFC 012.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN 3 -->
+<section class="section" id="seccion3">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-number">Sección 3</span>
+      <h2>El <span>Veredicto Retrospectivo</span> de los Sub-agentes</h2>
+    </div>
+
+    <div class="prose">
+      <h3>Las tres propuestas en conflicto</h3>
+      <p>El checkpoint arquitectónico de Tarea 2 simuló tres sub-agentes con restricciones radicalmente distintas para resolver el mismo problema: cómo organizar el backend y el cliente API antes de implementar los issues 005-011.</p>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h5>Sub-agente 1 — Mínima</h5>
+        <ul>
+          <li>execute(cmd) dispatch</li>
+          <li>query() + mutate()</li>
+          <li>Superficie mínima</li>
+          <li>Autocompletado pobre</li>
+        </ul>
+      </div>
+      <div class="compare-card">
+        <h5>Sub-agente 2 — Máxima Flexibilidad</h5>
+        <ul>
+          <li>Repository pattern completo</li>
+          <li>Clases ApiClient por recurso</li>
+          <li>Máxima testabilidad</li>
+          <li>14 archivos antes de lógica</li>
+        </ul>
+      </div>
+      <div class="compare-card winner">
+        <h5>✓ Híbrido elegido</h5>
+        <ul>
+          <li>Service por dominio (sin Repository)</li>
+          <li>ServiceResult + sendResult</li>
+          <li>Hooks de React Query</li>
+          <li>ApiError tipado</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="prose">
+      <h3>¿La interfaz elegida fue elástica frente al cambio?</h3>
+      <p>La prueba real de una arquitectura no es cómo se ve en el papel — es cómo responde cuando llegan los últimos issues más complejos.</p>
+    </div>
+
+    <div class="verdict">
+      <h3>✅ Sin Change Amplification en los issues 008-011</h3>
+      <p>El issue 008 (timer de sesiones) requería un nuevo endpoint <code class="inline-code">PATCH /api/sessions/:id</code>, un nuevo servicio <code class="inline-code">SessionService</code>, y un hook <code class="inline-code">useSessions</code>. Gracias al patrón del Service Layer, Ralph agregó exactamente eso sin tocar ningún archivo existente. El router de proyectos no cambió. La capa de hooks no se rompió.</p>
+
+      <p style="margin-top: 1rem;">El issue 011 (dashboard) fue el más complejo del sprint — lógica de fechas UTC, cálculo de racha, queries paralelas. <code class="inline-code">DashboardService.get()</code> encapsuló toda esa complejidad. El componente <code class="inline-code">DashboardPage.tsx</code> quedó en 80 líneas llamando a un único hook <code class="inline-code">useDashboard()</code>.</p>
+    </div>
+
+    <div class="prose">
+      <h3>Dónde sí hubo Change Amplification</h3>
+      <p>El único punto donde agregar una feature requirió modificar múltiples archivos fue la <strong>constante <code class="inline-code">PRIORITY_LABELS</code></strong>. Esta tabla de display (<code class="inline-code">ALTA → 'Alta'</code>, etc.) quedó definida en <code class="inline-code">ProjectsPage.tsx</code> y fue re-definida en <code class="inline-code">TaskCard.tsx</code>. Cualquier cambio en los labels requeriría editar dos archivos — exactamente la <strong>Oportunidad 2</strong> del checkpoint arquitectónico que quedó pendiente para el RFC 012.</p>
+
+      <h3>Juicio final bajo el criterio de "buen gusto arquitectónico"</h3>
+      <p>La decisión de <strong>no implementar la capa Repository</strong> del Sub-agente 2 fue correcta. Para un proyecto personal de un desarrollador, esa capa hubiera sido <strong>complejidad especulativa</strong> — lo que Ousterhout llama diseñar para un futuro que quizás no llegue.</p>
+      <p>La decisión de <strong>no usar el patrón Command/Dispatch</strong> del Sub-agente 1 también fue correcta. <code class="inline-code">taskService.create(id, data)</code> es descubrible en el IDE. <code class="inline-code">execute({ action: 'create', projectId: id })</code> no lo es.</p>
+      <p>La solución híbrida demostró ser <strong>elástica</strong>: los 7 issues posteriores al refactor se ejecutaron sin fricción arquitectónica documentable. El <code class="inline-code">HANDOFF.md</code> no registra ningún bloqueante arquitectónico después del issue 005.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>
+    <strong>Administracion_Estudio</strong> — AI Engineer Workshop 2026 ·
+    <a href="https://github.com/jorgemar0324/EstudioAdmin-App" target="_blank">Ver repositorio en GitHub ↗</a>
+  </p>
+  <p style="margin-top: 0.5rem; font-size: 0.8rem;">
+    Desarrollado con Claude Code · Analizado bajo <em>A Philosophy of Software Design</em> de John Ousterhout
+  </p>
+</footer>
+
+</body>
+</html>
